@@ -17,6 +17,25 @@ persistencia, pistas IA y dificultad adaptativa.
 
 ## Ejecucion
 
+Primero, desde la raiz, crea los archivos locales de configuracion y levanta
+PostgreSQL:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+docker compose up -d
+docker compose ps
+```
+
+Genera Prisma Client y aplica la migracion inicial:
+
+```powershell
+cd backend
+npm install
+npm run db:generate
+npm run db:migrate -- --name init
+```
+
 En dos terminales:
 
 ```powershell
@@ -36,5 +55,6 @@ El backend expone `GET http://localhost:3001/health` para comprobar el arranque.
 
 ## Variables de entorno
 
-Copiar los archivos `.env.example` a `.env` en cada aplicacion. No subir archivos
-`.env` ni claves reales al repositorio.
+Copiar los archivos `.env.example` a `.env` en la raiz y en cada aplicacion.
+No subir archivos `.env` ni claves reales al repositorio. Las credenciales de
+PostgreSQL incluidas en los ejemplos son exclusivamente para desarrollo local.

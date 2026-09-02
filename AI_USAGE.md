@@ -50,6 +50,21 @@ cambio que genero antes de cerrar dicha historia.
 | Verificacion | `frontend`: `npm run lint` y `npm run build` sin errores; Vite respondio HTTP 200. `backend`: `npm run build` sin errores; `GET /health` respondio `{"status":"ok"}`. Git confirma que `backend/.env` y `frontend/.env` estan ignorados. |
 | Limitacion | WSL 2 y Docker Desktop no estan instalados; PostgreSQL local queda pendiente para F2. |
 
+### F2 - Definir modelo y migracion
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Definir el modelo relacional y aplicar la primera migracion PostgreSQL para jugador, partida, ronda y cache de entidades. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Propuesta previa para F2: Prisma, PostgreSQL con Docker Compose, entidades minimas, relaciones, indices, restricciones, scripts y validaciones. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: no modificar, instalar ni migrar antes de presentar la propuesta; se presento y el usuario respondio `ACEPTO`. |
+| Propuesta tecnica | PostgreSQL 16-alpine con volumen y healthcheck; Prisma 6.19.0; enums de estado y dificultad; `Player`, `Match`, `Round` y `EntityCache`; restriccion unica `matchId + roundNumber`. |
+| Decision humana | Aceptado. Se autorizo instalar Prisma, crear configuracion local, levantar Docker y aplicar la migracion inicial. |
+| Resultado | Se crearon `docker-compose.yml`, `.env.example`, schema Prisma, scripts `db:generate`, `db:migrate` y `db:studio`, y migracion `20260902061239_init`. |
+| Verificacion | `docker compose ps` reporta PostgreSQL saludable; `npm run db:generate` y `npm run db:migrate -- --name init` finalizaron correctamente; existen las tablas `Player`, `Match`, `Round` y `EntityCache`; `npm run build` sigue sin errores. |
+| Ajustes o descartes | Se fijo Prisma 6.19.0 para conservar configuracion estable con `DATABASE_URL`, en vez de usar la version mayor mas reciente. No se crearon tablas de ranking, score ni hints porque son datos derivados o propios de partida/ronda. |
+| Riesgo pendiente | `npm audit --omit=dev` reporta cuatro vulnerabilidades altas transitivas de Prisma 6 (`deepmerge-ts` y `effect`). No se ejecuto `npm audit fix --force` porque propone un cambio incompatible; revisar actualizacion compatible antes de produccion. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
