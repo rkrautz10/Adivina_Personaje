@@ -52,6 +52,8 @@ npm run dev
 ```
 
 El backend expone `GET http://localhost:3001/health` para comprobar el arranque.
+La configuracion valida `DATABASE_URL` y `FRONTEND_ORIGIN` al iniciar; el
+servidor no arranca si falta alguna de estas variables requeridas.
 
 ## Variables de entorno
 

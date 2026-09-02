@@ -65,6 +65,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | Se fijo Prisma 6.19.0 para conservar configuracion estable con `DATABASE_URL`, en vez de usar la version mayor mas reciente. No se crearon tablas de ranking, score ni hints porque son datos derivados o propios de partida/ronda. |
 | Riesgo pendiente | `npm audit --omit=dev` reporta cuatro vulnerabilidades altas transitivas de Prisma 6 (`deepmerge-ts` y `effect`). No se ejecuto `npm audit fix --force` porque propone un cambio incompatible; revisar actualizacion compatible antes de produccion. |
 
+### F3 - Configurar validacion y errores
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear infraestructura reutilizable para validar configuracion y requests, y responder errores HTTP de forma consistente. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Analizar el backend real antes de modificarlo y proponer configuracion validada, errores de aplicacion, handler Fastify y validacion Zod reutilizable. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar siempre el contexto construido y no instalar ni modificar antes de una propuesta aprobada; se verifico que solo existia el bootstrap y no se adelantaron endpoints de negocio. |
+| Propuesta tecnica | Separar `config/env.ts`, `errors/app-error.ts`, `errors/error-handler.ts` y `http/validate-request.ts`; centralizar el contrato JSON de error y mantener `/health`. |
+| Decision humana | Aceptado. |
+| Resultado | `DATABASE_URL` y `FRONTEND_ORIGIN` fallan temprano si son invalidas; `PORT` mantiene default local; existen codigos `VALIDATION_ERROR`, `NOT_FOUND`, `CONFLICT`, `RATE_LIMITED`, `UPSTREAM_UNAVAILABLE` e `INTERNAL_ERROR`. |
+| Ajustes o descartes | `AI_API_KEY=` vacia en el entorno local bloqueaba el arranque pese a que I2 no esta implementada; se mantuvo opcional/vacia hasta la historia de integracion LLM. La ruta `GET /__debug/error` solo se habilita fuera de produccion para validar el handler. |
+| Verificacion | `npm run build` sin errores; `/health` responde 200; ruta inexistente responde `404/NOT_FOUND`; `GET /__debug/error` responde `500/INTERNAL_ERROR` sin stack trace; ejecutar desde un directorio sin `.env` y sin `DATABASE_URL` termina con ZodError y codigo 1. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

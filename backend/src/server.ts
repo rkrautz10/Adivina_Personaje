@@ -1,21 +1,20 @@
 import cors from '@fastify/cors'
-import dotenv from 'dotenv'
 import Fastify from 'fastify'
-import { z } from 'zod'
 
-dotenv.config()
-
-const environment = z
-  .object({
-    PORT: z.coerce.number().int().positive().default(3001),
-    FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
-  })
-  .parse(process.env)
+import { environment } from './config/env.js'
+import { registerErrorHandler } from './errors/error-handler.js'
 
 const app = Fastify({ logger: true })
 
 await app.register(cors, { origin: environment.FRONTEND_ORIGIN })
+registerErrorHandler(app)
 
 app.get('/health', async () => ({ status: 'ok' }))
+
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/__debug/error', async () => {
+    throw new Error('Controlled error for local validation')
+  })
+}
 
 await app.listen({ host: '0.0.0.0', port: environment.PORT })
