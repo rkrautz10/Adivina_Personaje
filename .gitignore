@@ -1,0 +1,17 @@
+# Dependencies and generated assets
+**/node_modules/
+**/dist/
+**/coverage/
+
+# Environment files and local database artifacts
+**/.env
+**/.env.*
+!**/.env.example
+*.sqlite
+*.sqlite-journal
+
+# Logs and editor files
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea/
