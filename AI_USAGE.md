@@ -121,6 +121,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se agrego Levenshtein: puede aceptar respuestas incorrectas y es P1. La primera prueba de doble conjetura uso JSON mal escapado y devolvio 400; se repitio con JSON valido y devolvio 409. |
 | Verificacion | `npm run build` sin errores. Acierto con nombre en mayusculas/espacios: `correct: true`, puntaje 149 y racha 1. Fallo: puntaje 0, racha 0 y nombre revelado. Segunda conjetura valida sobre la ronda resuelta: HTTP 409. Prisma confirma ambos resultados y totales persistidos. |
 
+### G4 - Finalizar partida
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Finalizar una partida de manera idempotente y persistir su estado final sin alterar puntaje ni racha. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Proponer cierre transaccional de Match, sin ranking, pistas ni dificultad adaptativa. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: no modificar antes de la propuesta aprobada y validar el contexto existente; se confirmo que Match y Round ya tienen estados, fechas y datos necesarios. |
+| Decision humana | Aceptado. |
+| Propuesta tecnica | Transaccion serializable, lectura de rondas, bloqueo de cierre con ronda `ACTIVE` y actualizacion condicional de `IN_PROGRESS` a `FINISHED`. |
+| Resultado | Se agrego `POST /matches/:matchId/finish`. Una partida finalizada retorna su misma representacion sin modificar `finishedAt`, total ni racha. |
+| Ajustes o descartes | No se agregaron migraciones ni dependencias: el schema existente contiene los campos requeridos. No se cerro automaticamente la partida tras una conjetura, porque el cierre pertenece a G4. |
+| Verificacion | `npm run build` sin errores. Cierre de partida con ronda resuelta: `200/FINISHED`, total 149 y una ronda. Repetir cierre devolvio el mismo `finishedAt`. Partida con ronda activa devolvio `409/CONFLICT`; partida inexistente devolvio `404/NOT_FOUND`. Prisma confirma el estado final persistido. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

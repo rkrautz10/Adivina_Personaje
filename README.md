@@ -63,6 +63,8 @@ servidor no arranca si falta alguna de estas variables requeridas.
 	exponer el identificador de PokéAPI.
 - `POST /rounds/:roundId/guess`: resuelve una conjetura y calcula el puntaje
 	exclusivamente en el backend.
+- `POST /matches/:matchId/finish`: finaliza una partida sin ronda activa de
+	forma idempotente.
 
 ## Variables de entorno
 
