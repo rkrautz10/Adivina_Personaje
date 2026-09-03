@@ -135,6 +135,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se agregaron migraciones ni dependencias: el schema existente contiene los campos requeridos. No se cerro automaticamente la partida tras una conjetura, porque el cierre pertenece a G4. |
 | Verificacion | `npm run build` sin errores. Cierre de partida con ronda resuelta: `200/FINISHED`, total 149 y una ronda. Repetir cierre devolvio el mismo `finishedAt`. Partida con ronda activa devolvio `409/CONFLICT`; partida inexistente devolvio `404/NOT_FOUND`. Prisma confirma el estado final persistido. |
 
+### I1 - Implementar fallback de pistas
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear un generador determinista de tres pistas progresivas que no dependa de LLM, red ni nombre de entidad. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Proponer un provider puro basado solo en los atributos almacenados de PokéAPI, sin endpoint HTTP, persistencia, penalizacion ni dificultad adaptativa. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar que `EntityCache` ya tuviera tipos, altura, peso y habilidades; no adelantar I3 ni I2. |
+| Decision humana | Aceptado; se eligio implementar solo el provider puro y dejar persistencia/control de `hintsUsed` para I3. |
+| Propuesta tecnica | `HintProvider` con niveles 1, 2 y 3; `FallbackHintProvider` con tipo, rango humano de altura y habilidad, mas textos seguros ante atributos faltantes. |
+| Resultado | Se crearon el contrato de pistas y el fallback sin I/O. La entrada no contiene `entityName`, ID ni texto del jugador. |
+| Ajustes o descartes | No se persisten pistas en `Round.hints` ni se aplican penalizaciones: esas responsabilidades requieren endpoint e idempotencia y pertenecen a I3. |
+| Verificacion | Prueba directa generó pistas por tipo, altura y habilidad; con atributos incompletos devolvio textos seguros sin error. `npm run build` finalizo sin errores. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
