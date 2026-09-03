@@ -1,9 +1,12 @@
 import { Prisma } from '@prisma/client'
 
+import { prisma } from '../database/prisma.js'
 import { findFreshEntity, saveEntity } from '../entities/entity-cache.repository.js'
 import { AppError } from '../errors/app-error.js'
 import { PokeApiProvider } from '../providers/pokeapi.provider.js'
-import { createRound, findMatchWithRounds, findRoundImage } from './round.repository.js'
+import { calculateScore } from '../scoring/scoring.service.js'
+import { normalizeText } from '../utils/normalize-text.js'
+import { createRound, findMatchWithRounds, findRoundImage, resolveRound } from './round.repository.js'
 
 const EASY_ID_MAX = 151
 const MAX_SELECTION_ATTEMPTS = 3
@@ -102,5 +105,63 @@ export async function getRoundImage(roundId: string) {
   return {
     contentType: response.headers.get('content-type') ?? 'image/png',
     image: Buffer.from(await response.arrayBuffer()),
+  }
+}
+
+export async function resolveGuess(roundId: string, guess: string) {
+  try {
+    return await prisma.$transaction(
+      async (transaction) => {
+        const round = await transaction.round.findUnique({
+          where: { id: roundId },
+          include: { match: true },
+        })
+
+        if (!round) {
+          throw new AppError(404, 'NOT_FOUND', 'Round not found')
+        }
+
+        if (round.status !== 'ACTIVE') {
+          throw new AppError(409, 'CONFLICT', 'Round is not active')
+        }
+
+        const correct = normalizeText(guess) === normalizeText(round.entityName)
+        const score = calculateScore({
+          correct,
+          elapsedMs: Date.now() - round.startedAt.getTime(),
+          hintsUsed: round.hintsUsed,
+          currentStreak: round.match.currentStreak,
+        })
+
+        const updateResult = await resolveRound(transaction, round.id, correct, score.scoreDelta)
+        if (updateResult.count === 0) {
+          throw new AppError(409, 'CONFLICT', 'Round is not active')
+        }
+
+        const match = await transaction.match.update({
+          where: { id: round.matchId },
+          data: {
+            currentStreak: score.nextStreak,
+            totalScore: { increment: score.scoreDelta },
+          },
+        })
+
+        return {
+          correct,
+          revealedName: round.entityName,
+          scoreDelta: score.scoreDelta,
+          totalScore: match.totalScore,
+          currentStreak: match.currentStreak,
+          roundStatus: 'RESOLVED' as const,
+        }
+      },
+      { isolationLevel: 'Serializable' },
+    )
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+      throw new AppError(409, 'CONFLICT', 'Round is being resolved')
+    }
+
+    throw error
   }
 }

@@ -61,6 +61,8 @@ servidor no arranca si falta alguna de estas variables requeridas.
 - `POST /matches/:matchId/rounds`: crea una ronda con una entidad oculta.
 - `GET /rounds/:roundId/image`: entrega la imagen mediante el backend, sin
 	exponer el identificador de PokéAPI.
+- `POST /rounds/:roundId/guess`: resuelve una conjetura y calcula el puntaje
+	exclusivamente en el backend.
 
 ## Variables de entorno
 

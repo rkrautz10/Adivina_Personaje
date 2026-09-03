@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client'
+
 import { prisma } from '../database/prisma.js'
 
 export function findMatchWithRounds(matchId: string) {
@@ -19,6 +21,23 @@ export function findRoundImage(roundId: string) {
     select: {
       status: true,
       entity: { select: { imageUrl: true } },
+    },
+  })
+}
+
+export function resolveRound(
+  transaction: Prisma.TransactionClient,
+  roundId: string,
+  correct: boolean,
+  score: number,
+) {
+  return transaction.round.updateMany({
+    where: { id: roundId, status: 'ACTIVE' },
+    data: {
+      status: 'RESOLVED',
+      correct,
+      score,
+      resolvedAt: new Date(),
     },
   })
 }

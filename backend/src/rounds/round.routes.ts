@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 import { validateRequest } from '../http/validate-request.js'
-import { createRoundForMatch, getRoundImage } from './round.service.js'
+import { createRoundForMatch, getRoundImage, resolveGuess } from './round.service.js'
 
 const roundParamsSchema = {
   params: z.object({ matchId: z.string().cuid() }),
@@ -10,6 +10,11 @@ const roundParamsSchema = {
 
 const imageParamsSchema = {
   params: z.object({ roundId: z.string().cuid() }),
+}
+
+const guessSchema = {
+  params: z.object({ roundId: z.string().cuid() }),
+  body: z.object({ guess: z.string().trim().min(1).max(100) }),
 }
 
 export async function registerRoundRoutes(app: FastifyInstance): Promise<void> {
@@ -25,5 +30,10 @@ export async function registerRoundRoutes(app: FastifyInstance): Promise<void> {
     const image = await getRoundImage(params.roundId)
 
     return reply.type(image.contentType).send(image.image)
+  })
+
+  app.post('/rounds/:roundId/guess', async (request) => {
+    const { params, body } = validateRequest(request, guessSchema)
+    return resolveGuess(params.roundId, body.guess)
   })
 }

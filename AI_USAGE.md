@@ -107,6 +107,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | La primera prueba POST no envio JSON y Fastify la trato como media type no soportado; el handler se ajusto para responder `400/VALIDATION_ERROR` en lugar de 500. Se corrigio la migracion agregando la FK que faltaba entre el modelo Prisma y PostgreSQL. |
 | Verificacion | Prisma Client generado, migraciones aplicadas y `npm run build` sin errores. La respuesta de ronda devolvio 201 sin `entityName`, `entityId`, tipos ni habilidades; segunda ronda activa devolvio `409/CONFLICT`; partida inexistente devolvio `404/NOT_FOUND`; proxy de imagen devolvio `200 image/png`; PostgreSQL confirma `Round_entityId_fkey`; provider con entidad invalida devolvio `502/UPSTREAM_UNAVAILABLE`. |
 
+### G3 - Resolver conjetura
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Resolver una conjetura y calcular/persistir puntaje y racha exclusivamente en el backend. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Proponer normalizacion exacta, puntaje puro y una transaccion Prisma para resolver la ronda sin adelantar pistas, dificultad, finalizacion o ranking. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar que el modelo ya tuviera tiempo, pistas, puntaje, estado y racha antes de implementar; se confirmo que G3 no requiere migracion ni dependencias nuevas. |
+| Decision humana | Aceptado. |
+| Propuesta tecnica | Normalizacion de texto sin tildes ni mayusculas, comparacion exacta, `scoring.service` puro y transaccion serializable con actualizacion condicional de ronda activa. |
+| Resultado | Se agrego `POST /rounds/:roundId/guess`. El cliente solo envia `guess`; el servidor calcula tiempo, puntaje, racha, resolucion y total de partida. |
+| Ajustes o descartes | No se agrego Levenshtein: puede aceptar respuestas incorrectas y es P1. La primera prueba de doble conjetura uso JSON mal escapado y devolvio 400; se repitio con JSON valido y devolvio 409. |
+| Verificacion | `npm run build` sin errores. Acierto con nombre en mayusculas/espacios: `correct: true`, puntaje 149 y racha 1. Fallo: puntaje 0, racha 0 y nombre revelado. Segunda conjetura valida sobre la ronda resuelta: HTTP 409. Prisma confirma ambos resultados y totales persistidos. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
