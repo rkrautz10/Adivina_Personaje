@@ -1,0 +1,5 @@
+ALTER TABLE "Round"
+ADD CONSTRAINT "Round_entityId_fkey"
+FOREIGN KEY ("entityId") REFERENCES "EntityCache"("entityId")
+ON DELETE RESTRICT
+ON UPDATE CASCADE;

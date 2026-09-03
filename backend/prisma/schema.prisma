@@ -62,6 +62,7 @@ model Round {
   startedAt  DateTime    @default(now())
   resolvedAt DateTime?
   match      Match       @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  entity     EntityCache @relation(fields: [entityId], references: [entityId])
 
   @@unique([matchId, roundNumber])
   @@index([matchId])
@@ -74,6 +75,7 @@ model EntityCache {
   attributes Json
   cachedAt   DateTime @default(now())
   expiresAt  DateTime?
+  rounds     Round[]
 
   @@index([expiresAt])
 }

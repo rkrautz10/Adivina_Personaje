@@ -93,6 +93,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | Fastify rechazo un schema de respuesta Zod usado directamente en la ruta; se retiro porque el proyecto no tiene adaptador Zod para schemas Fastify. El handler central se ajusto para traducir errores 400 nativos de Fastify a `VALIDATION_ERROR`. |
 | Verificacion | Prisma Client generado, migracion aplicada y `npm run build` sin errores. Dos requests con `Ash` y ` ash ` devolvieron el mismo `playerId` y distinto `matchId`; alias invalido devolvio HTTP 400; Prisma confirma un unico jugador `ash` y cuatro partidas de las pruebas. |
 
+### G2 - Crear ronda desde PokéAPI
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear la siguiente ronda de una partida activa usando PokéAPI, cachear sus datos y no revelar la respuesta al cliente. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Proponer provider PokéAPI, cache de entidades, reglas de ronda, imagen opaca y validaciones, sin adelantar conjeturas ni puntaje. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar el contexto real, no modificar antes de aprobar y no adelantar funcionalidades; se confirmo que G3 no existe y G2 solo crea/entrega una ronda oculta. |
+| Decision humana | Aceptado, incluyendo servir la imagen desde `/rounds/:roundId/image` y proteger una ronda activa por partida desde PostgreSQL. |
+| Propuesta tecnica | `fetch` nativo Node 24 con timeout de 3 segundos, `CharacterProvider`/`PokeApiProvider`, cache con TTL de 24 horas, repositorios y servicio de rondas. |
+| Resultado | Se agregaron `POST /matches/:matchId/rounds` y `GET /rounds/:roundId/image`; el nombre e ID externo quedan internos. Se crearon migraciones para un indice unico parcial de ronda `ACTIVE` y la FK `Round.entityId` a `EntityCache`. |
+| Ajustes o descartes | La primera prueba POST no envio JSON y Fastify la trato como media type no soportado; el handler se ajusto para responder `400/VALIDATION_ERROR` en lugar de 500. Se corrigio la migracion agregando la FK que faltaba entre el modelo Prisma y PostgreSQL. |
+| Verificacion | Prisma Client generado, migraciones aplicadas y `npm run build` sin errores. La respuesta de ronda devolvio 201 sin `entityName`, `entityId`, tipos ni habilidades; segunda ronda activa devolvio `409/CONFLICT`; partida inexistente devolvio `404/NOT_FOUND`; proxy de imagen devolvio `200 image/png`; PostgreSQL confirma `Round_entityId_fkey`; provider con entidad invalida devolvio `502/UPSTREAM_UNAVAILABLE`. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

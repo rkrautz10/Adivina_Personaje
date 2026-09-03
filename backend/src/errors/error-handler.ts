@@ -16,7 +16,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
       })
     }
 
-    if ('statusCode' in error && error.statusCode === 400) {
+    if ('statusCode' in error && (error.statusCode === 400 || error.statusCode === 415)) {
       return reply.status(400).send({
         statusCode: 400,
         code: 'VALIDATION_ERROR',

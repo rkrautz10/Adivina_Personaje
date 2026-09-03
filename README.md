@@ -55,6 +55,13 @@ El backend expone `GET http://localhost:3001/health` para comprobar el arranque.
 La configuracion valida `DATABASE_URL` y `FRONTEND_ORIGIN` al iniciar; el
 servidor no arranca si falta alguna de estas variables requeridas.
 
+## Rutas disponibles
+
+- `POST /matches`: crea una partida para un alias valido.
+- `POST /matches/:matchId/rounds`: crea una ronda con una entidad oculta.
+- `GET /rounds/:roundId/image`: entrega la imagen mediante el backend, sin
+	exponer el identificador de PokéAPI.
+
 ## Variables de entorno
 
 Copiar los archivos `.env.example` a `.env` en la raiz y en cada aplicacion.

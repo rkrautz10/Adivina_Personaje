@@ -1,0 +1,29 @@
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+
+import { validateRequest } from '../http/validate-request.js'
+import { createRoundForMatch, getRoundImage } from './round.service.js'
+
+const roundParamsSchema = {
+  params: z.object({ matchId: z.string().cuid() }),
+}
+
+const imageParamsSchema = {
+  params: z.object({ roundId: z.string().cuid() }),
+}
+
+export async function registerRoundRoutes(app: FastifyInstance): Promise<void> {
+  app.post('/matches/:matchId/rounds', async (request, reply) => {
+    const { params } = validateRequest(request, roundParamsSchema)
+    const round = await createRoundForMatch(params.matchId)
+
+    return reply.status(201).send(round)
+  })
+
+  app.get('/rounds/:roundId/image', async (request, reply) => {
+    const { params } = validateRequest(request, imageParamsSchema)
+    const image = await getRoundImage(params.roundId)
+
+    return reply.type(image.contentType).send(image.image)
+  })
+}
