@@ -16,6 +16,14 @@ export function registerErrorHandler(app: FastifyInstance): void {
       })
     }
 
+    if ('statusCode' in error && error.statusCode === 400) {
+      return reply.status(400).send({
+        statusCode: 400,
+        code: 'VALIDATION_ERROR',
+        message: 'Request validation failed',
+      })
+    }
+
     if (error instanceof AppError) {
       return reply.status(error.statusCode).send({
         statusCode: error.statusCode,

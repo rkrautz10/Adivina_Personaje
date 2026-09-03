@@ -79,6 +79,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | `AI_API_KEY=` vacia en el entorno local bloqueaba el arranque pese a que I2 no esta implementada; se mantuvo opcional/vacia hasta la historia de integracion LLM. La ruta `GET /__debug/error` solo se habilita fuera de produccion para validar el handler. |
 | Verificacion | `npm run build` sin errores; `/health` responde 200; ruta inexistente responde `404/NOT_FOUND`; `GET /__debug/error` responde `500/INTERNAL_ERROR` sin stack trace; ejecutar desde un directorio sin `.env` y sin `DATABASE_URL` termina con ZodError y codigo 1. |
 
+### G1 - Crear partida
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Exponer `POST /matches` para crear una partida nueva y reutilizar al jugador identificado por alias. |
+| Herramienta | GitHub Copilot en VS Code. |
+| Prompt/resumen | Proponer e implementar una ruta de partidas con Prisma, validacion de alias, repositorios y servicio, sin adelantar rondas, PokéAPI, pistas ni puntaje. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar el contexto antes de cambiarlo y no implementar fuera del alcance de G1; se confirmo que no existian modulos de negocio y solo se agrego creacion de partida. |
+| Decision humana | Aceptado, incluyendo `normalizedAlias` unico para que variantes como `Ash` y ` ash ` no creen jugadores distintos. |
+| Propuesta tecnica | Prisma Client compartido, repositorio de jugadores con `upsert`, repositorio de partidas, servicio de normalizacion/orquestacion y ruta `POST /matches`. |
+| Resultado | Se agrego `normalizedAlias` unico mediante la migracion `20260903014601_add_normalized_player_alias`; el endpoint responde `201` con datos de una partida `IN_PROGRESS` en dificultad `EASY`. |
+| Ajustes o descartes | Fastify rechazo un schema de respuesta Zod usado directamente en la ruta; se retiro porque el proyecto no tiene adaptador Zod para schemas Fastify. El handler central se ajusto para traducir errores 400 nativos de Fastify a `VALIDATION_ERROR`. |
+| Verificacion | Prisma Client generado, migracion aplicada y `npm run build` sin errores. Dos requests con `Ash` y ` ash ` devolvieron el mismo `playerId` y distinto `matchId`; alias invalido devolvio HTTP 400; Prisma confirma un unico jugador `ash` y cuatro partidas de las pruebas. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

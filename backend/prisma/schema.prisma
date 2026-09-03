@@ -25,10 +25,11 @@ enum RoundStatus {
 }
 
 model Player {
-  id        String   @id @default(cuid())
-  alias     String   @unique @db.VarChar(30)
-  createdAt DateTime @default(now())
-  matches   Match[]
+  id              String   @id @default(cuid())
+  alias           String   @db.VarChar(30)
+  normalizedAlias String   @unique @db.VarChar(30)
+  createdAt       DateTime @default(now())
+  matches         Match[]
 }
 
 model Match {

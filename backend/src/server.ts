@@ -3,6 +3,7 @@ import Fastify from 'fastify'
 
 import { environment } from './config/env.js'
 import { registerErrorHandler } from './errors/error-handler.js'
+import { registerMatchRoutes } from './matches/match.routes.js'
 
 const app = Fastify({ logger: true })
 
@@ -10,6 +11,7 @@ await app.register(cors, { origin: environment.FRONTEND_ORIGIN })
 registerErrorHandler(app)
 
 app.get('/health', async () => ({ status: 'ok' }))
+await app.register(registerMatchRoutes)
 
 if (process.env.NODE_ENV !== 'production') {
   app.get('/__debug/error', async () => {
