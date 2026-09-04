@@ -99,11 +99,7 @@ sequenceDiagram
         Backend->>Backend: normaliza y compara contra entityName
         Backend->>DB: transaccion: resolver Round + actualizar Match
         Backend-->>Frontend: correct, revealedName, scoreDelta, totalScore
-        Note over Frontend,Backend: 30 s limita el bonus; mas de 3 min marca EXPIRED y finaliza la partida
-
-        Note over Backend: cada endpoint relacionado verifica abandono antes de continuar
-
-        Note over Backend: recalcula dificultad segun ventana de rondas recientes
+        Note over Backend: 30 s limita el bonus y mas de 3 min marca EXPIRED, finaliza la partida, verifica abandono antes de continuar y recalcula dificultad segun rondas recientes
 
         alt STANDARD y rondas menores que 10
             Backend-->>Frontend: continuar con la siguiente ronda
