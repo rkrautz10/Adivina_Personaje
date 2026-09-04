@@ -6,65 +6,50 @@ actualiza si el diseno cambia durante el desarrollo.
 ## Flujo end-to-end de una partida
 
 ```text
-┌───────────────┐         ┌───────────────────────────┐
-│   Jugador     │         │ 1. Crear partida          │
-│  ingresa alias│───────▶│ POST /matches             │
-└───────────────┘         │ Player upsert + Match     │
-                          │ (IN_PROGRESS, EASY)       │
-                          └─────────────┬─────────────┘
-                                        │
-                                        ▼
-                          ┌────────────────────────────┐
-                          │ 2. Crear ronda oculta      │
-                          │ POST /matches/:id/rounds   │
-                          │ cache EntityCache o        │
-                          │ PokeAPI (timeout 3s)       │
-                          └─────────────┬──────────────┘
-                                        │
-                                        ▼
-                          ┌────────────────────────────┐
-                          │ 3. Mostrar imagen          │
-                          │ GET /rounds/:id/image      │
-                          │ (proxy, sin ID externo)    │
-                          └─────────────┬──────────────┘
-                                        │
-                     ┌──────────────────┼───────────────────┐
-                     ▼                                      ▼
-        ┌───────────────────────────┐         ┌───────────────────────────┐
-        │ 4a. Pedir pista           │         │ 4b. Responder             │
-        │ POST /rounds/:id/hints    │         │ POST /rounds/:id/guess    │
-        │ LLM; fallback si falla    │         │ compara server-side       │
-        └─────────────┬─────────────┘         └────────────────┬──────────┘
-                      │                                        │
-                      └───────────────────┬────────────────────┘
-                                          ▼
-                          ┌────────────────────────────┐
-                          │ 5. Resolver ronda          │
-                          │ score, streak, revealName  │
-                          │ transaccion Serializable   │
-                          └─────────────┬──────────────┘
-                                        │
-                                        ▼
-                          ┌────────────────────────────┐
-                          │ 5b. Ajustar dificultad     │
-                          │ segun ventana de rondas    │
-                          │ recientes                  │
-                          └─────────────┬──────────────┘
-                                        │
-                          ┌─────────────┴───────────────┐
-                          ▼                             ▼
-            ┌───────────────────────────┐  ┌───────────────────────────┐
-            │ 6a. Rondas < 10           │  │ 6b. Rondas = 10 o el      │
-            │ vuelve al paso 2          │  │ jugador decide terminar   │
-            │ (siguiente ronda)         │  │                           │
-            └───────────────────────────┘  └─────────────┬─────────────┘
-                                                         ▼
-                                          ┌───────────────────────────┐
-                                          │ 7. Finalizar partida      │
-                                          │ POST /matches/:id/finish  │
-                                          │ idempotente, sin ronda    │
-                                          │ ACTIVE                    │
-                                          └───────────────────────────┘
+                ┌────────────────────────────┐
+                │ Crear partida              │
+                │ alias + modo               │
+                └──────────────┬─────────────┘
+                               │
+                ┌──────────────┴─────────────┐
+                ▼                            ▼
+        ┌────────────────────┐      ┌────────────────────┐
+        │ STANDARD           │      │ STREAK             │
+        │ hasta 10 rondas    │      │ hasta primer fallo │
+        └─────────┬──────────┘      └─────────┬──────────┘
+                  └──────────────┬────────────┘
+                                 ▼
+                  ┌────────────────────────────┐
+                  │ Crear ronda                │
+                  │ imagen obfuscada           │
+                  │ desde backend              │
+                  └──────────────┬─────────────┘
+                                 ▼
+                  ┌────────────────────────────┐
+                  │ Adivinar o pedir hasta     │
+                  │ 3 pistas: LLM -> fallback  │
+                  └──────────────┬─────────────┘
+                                 ▼
+                  ┌────────────────────────────┐
+                  │ Resolver ronda             │
+                  │ revelar y puntuar          │
+                  └──────────────┬─────────────┘
+                                 ▼
+                  ┌────────────────────────────┐
+                  │ Ajustar dificultad y       │
+                  │ persistir estado           │
+                  └──────────────┬─────────────┘
+                                 │
+                  ┌──────────────┴─────────────┐
+                  ▼                            ▼
+        ┌────────────────────┐      ┌────────────────────────┐
+        │ Continuar siguiente│      │ Finalizar y mostrar    │
+        │ ronda según el modo│      │ puntaje y ranking      │
+        └──────────┬─────────┘      └────────────────────────┘
+                   │
+                   └────────────── vuelve a Crear ronda
+
+Abandono: si una ronda supera 3 minutos, se marca EXPIRED y finaliza la partida.
 ```
 
 Version equivalente en Mermaid, util para exportar o versionar el diagrama:
@@ -78,35 +63,57 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Jugador->>Frontend: Ingresa alias
-    Frontend->>Backend: POST /matches { alias }
+    Jugador->>Frontend: Selecciona STANDARD o STREAK
+    Frontend->>Backend: POST /matches { alias, mode }
     Backend->>DB: upsert Player + create Match (IN_PROGRESS)
-    Backend-->>Frontend: matchId, status, difficultyLevel
+    Backend-->>Frontend: matchId, mode, status, difficultyLevel
 
-    Frontend->>Backend: POST /matches/:matchId/rounds
-    Backend->>DB: buscar cache de entidad
-    alt cache invalida o inexistente
-        Backend->>PokeAPI: GET /pokemon/:id (timeout 3s)
-        PokeAPI-->>Backend: datos crudos
-        Backend->>DB: guardar EntityCache (TTL 24h)
-    end
-    Backend->>DB: crear Round (ACTIVE)
-    Backend-->>Frontend: roundId, imageUrl opaca, timeLimitMs
+    loop Mientras el modo permita continuar
+        Frontend->>Backend: POST /matches/:matchId/rounds
+        Backend->>DB: buscar cache de entidad
+        alt cache invalida o inexistente
+            Backend->>PokeAPI: GET /pokemon/:id (timeout 3s)
+            PokeAPI-->>Backend: datos crudos
+            Backend->>DB: guardar EntityCache (TTL 24h)
+        end
+        Backend->>DB: crear Round (ACTIVE)
+        Backend->>Backend: generar imagen obfuscada server-side
+        Backend-->>Frontend: roundId, imagen obfuscada, bonusLimitMs=30000
 
-    Frontend->>Backend: GET /rounds/:roundId/image
-    Backend->>PokeAPI: descarga artwork (usando cache interna)
-    Backend-->>Frontend: imagen (sin exponer ID externo)
+        Frontend->>Backend: GET /rounds/:roundId/image
+        Backend-->>Frontend: imagen obfuscada sin artwork original
 
-    Frontend->>Backend: POST /rounds/:roundId/guess { guess }
-    Backend->>Backend: normaliza y compara contra entityName
-    Backend->>DB: transaccion: resolver Round + actualizar Match
-    Backend-->>Frontend: correct, revealedName, scoreDelta, totalScore
+        opt hasta 3 pistas
+            Frontend->>Backend: POST /rounds/:roundId/hints
+            Backend->>Backend: intenta LlmHintProvider
+            alt LLM responde valido
+                Backend-->>Frontend: pista LLM
+            else error, timeout, spoiler o salida invalida
+                Backend->>Backend: usa FallbackHintProvider
+                Backend-->>Frontend: pista fallback
+            end
+            Backend->>DB: incrementar hintsUsed y persistir Round.hints
+        end
 
-    Note over Backend: cada endpoint que toca la partida verifica si la ronda ACTIVE supero 3 min de abandono y, de ser asi, la expira y finaliza la partida antes de continuar
+        Frontend->>Backend: POST /rounds/:roundId/guess { guess }
+        Backend->>Backend: normaliza y compara contra entityName
+        Backend->>DB: transaccion: resolver Round + actualizar Match
+        Backend-->>Frontend: correct, revealedName, scoreDelta, totalScore
+        Note over Frontend,Backend: 30 s limita el bonus; mas de 3 min marca EXPIRED y finaliza la partida
 
-    Note over Backend: recalcula dificultad segun ventana de rondas recientes
+        Note over Backend: cada endpoint relacionado verifica abandono antes de continuar
 
-    loop Hasta 10 rondas o decision del jugador
-        Frontend->>Backend: POST /matches/:matchId/rounds (siguiente ronda)
+        Note over Backend: recalcula dificultad segun ventana de rondas recientes
+
+        alt STANDARD y rondas menores que 10
+            Backend-->>Frontend: continuar con la siguiente ronda
+        else STREAK y guess correcto
+            Backend-->>Frontend: continuar con la siguiente ronda
+        else STREAK y guess incorrecto o abandono
+            Backend-->>Frontend: finalizar partida
+        else STANDARD y ronda 10 o decision del jugador
+            Backend-->>Frontend: finalizar partida
+        end
     end
 
     Frontend->>Backend: POST /matches/:matchId/finish
