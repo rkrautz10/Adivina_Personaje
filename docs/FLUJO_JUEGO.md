@@ -101,7 +101,7 @@ sequenceDiagram
     Backend->>DB: transaccion: resolver Round + actualizar Match
     Backend-->>Frontend: correct, revealedName, scoreDelta, totalScore
 
-    Note over Backend: cada endpoint que toca la partida verifica primero\nsi la ronda ACTIVE supero 3 min (abandono); si es asi, la expira\ny finaliza la partida antes de continuar
+    Note over Backend: cada endpoint que toca la partida verifica si la ronda ACTIVE supero 3 min de abandono y, de ser asi, la expira y finaliza la partida antes de continuar
 
     Note over Backend: recalcula dificultad segun ventana de rondas recientes
 
