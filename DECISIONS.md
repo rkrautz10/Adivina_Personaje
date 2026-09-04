@@ -253,6 +253,41 @@ se usa por primera vez con este proposito.
 
 ---
 
+## ADR-09: Bucle de juego, modos y orden de implementacion
+
+**Contexto:** el reto exige un bucle completo: presentar una entidad oculta,
+adivinar con limite de tiempo, pedir hasta tres pistas de IA, resolver,
+adaptar dificultad y persistir el resultado para el ranking. El proyecto ya
+cuenta con la base de partidas, rondas, puntaje, racha y proveedor LLM, pero
+I3, la obfuscacion server-side, los modos, la dificultad, la interfaz y el
+ranking pertenecen a historias distintas.
+
+**Decision:** se mantienen dos tiempos independientes: 30 segundos para el
+bonus de velocidad y 3 minutos para abandono. Se implementan dos modos:
+`STANDARD`, con maximo de 10 rondas, y `STREAK`, que continua hasta el primer
+fallo o abandono. El backend aplica todas las reglas y el frontend solo las
+representa.
+
+El orden aprobado es: I3; correccion transversal de G2 para obfuscacion
+server-side; HU tecnica de modos con migracion; D1; U1; U2; U3; Q1/Q2; y
+documentacion final.
+
+La regla de puntuacion vigente se conserva: base 100, bonus de velocidad,
+penalizacion actual por `hintsUsed` y multiplicador de racha. La alternativa
+100/50/20 se descarta y no se implementa en esta etapa.
+
+**Por que:** separa el nucleo jugable de la presentacion, permite cerrar I3
+sin mezclar frontend o ranking y hace explicitas las dependencias. La
+expiracion reutilizable se conecta a todos los endpoints que tocan la partida
+para que el abandono no deje partidas bloqueadas.
+
+**Consecuencias:** G2 recibira una correccion server-side; los modos requieren
+una migracion y afectan G1/U1; D1 solo ajusta dificultad; U3 incorpora el
+ranking; Q1/Q2 validan el flujo completo. Hasta terminar esas historias, el
+bucle se considera parcialmente implementado.
+
+---
+
 ## Evolucion futura del producto
 
 Ideas que van mas alla del alcance de la prueba tecnica, para un contexto de

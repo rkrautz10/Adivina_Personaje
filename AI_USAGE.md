@@ -163,6 +163,18 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | OpenAI `gpt-4o-mini` quedó como alternativa cloud de pago por uso, no como opción gratuita. Groq y Gemini quedan sujetos a sus tiers y límites vigentes. La validación anti-spoiler final y la orquestación LLM -> fallback pertenecen a I3. |
 | Verificacion | `npm test`: 5 pruebas pasan sin red ni claves reales (configuración ausente, respuesta válida, salida vacía/larga, timeout y fallback asíncrono). `npm run build` pasa sin errores. La API oficial de OpenAI, Gemini, Groq y Ollama fue consultada para distinguir SDK gratuito, API cloud con límites y ejecución local sin costo por solicitud. |
 
+### Ajuste transversal - bucle de juego y orden de trabajo
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Fijar las reglas del bucle de juego y ordenar I3, G2, modos, D1, U1-U3, Q1-Q2 y X1 sin mezclar responsabilidades. |
+| Herramienta | GitHub Copilot con agentes especializados de nivel Master. |
+| Prompt/resumen | Mantener dos tiempos, exigir obfuscacion server-side, implementar `STANDARD` y `STREAK`, documentar decisiones y separar I3 de HUs posteriores. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: cumplir el bucle de juego completo y documentar instrucciones, decisiones, flujos y orden de trabajo; se descarta en esta etapa la alternativa de puntuacion 100/50/20. |
+| Decision humana | Aceptado. El orden aprobado es I3; correccion G2; modos; D1; U1; U2; U3; Q1/Q2; documentacion final. |
+| Resultado | Se actualizaron las instrucciones del proyecto, ADR-09, el flujo del juego y esta bitacora. Las HUs de GitHub se ajustaran con el mismo alcance y dependencias. |
+| Verificacion | Se contrastaron las reglas con el schema Prisma, servicios de rondas, puntaje, partidas y documentacion existente. No se implementaron cambios funcionales en esta actualizacion. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

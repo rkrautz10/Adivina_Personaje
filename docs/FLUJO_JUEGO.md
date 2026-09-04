@@ -178,3 +178,24 @@ flowchart LR
 Ni el fallback ni el LLM reciben el nombre ni el ID de la entidad, por lo
 que no pueden revelarlos. El endpoint de pistas controla el limite de tres
 por ronda y persiste cada pista generada en `Round.hints`.
+
+## Orden de implementacion aprobado
+
+El cierre del bucle se ejecuta en este orden para mantener las dependencias
+controladas:
+
+1. I3 implementa pistas, fallback, limite de tres, persistencia, penalizacion
+    y expiracion reutilizable.
+2. G2 recibe la correccion para entregar la imagen obfuscada desde backend.
+3. Una HU tecnica agrega los modos `STANDARD` (10 rondas) y `STREAK` (hasta
+    el primer fallo), con su migracion.
+4. D1 implementa dificultad adaptativa.
+5. U1 permite elegir el modo al iniciar.
+6. U2 representa la ronda completa, sus dos relojes, pistas y expiracion.
+7. U3 muestra resultado, puntaje persistido y ranking.
+8. Q1/Q2 validan dominio, integracion y flujo completo.
+9. X1 consolida ADRs, flujo, README y bitacora.
+
+Los dos relojes son independientes: 30 segundos limitan el bonus de velocidad
+y 3 minutos determinan abandono. La formula vigente de G3 se mantiene; la
+alternativa de puntos base 100/50/20 no forma parte de este alcance.
