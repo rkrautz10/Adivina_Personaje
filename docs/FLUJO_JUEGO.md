@@ -152,11 +152,11 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     A[Recibe guess] --> B{Normalizado == entityName normalizado?}
-    B -- No --> C[scoreDelta = 0, streak = 0]
+    B -- No --> C["scoreDelta = 0, streak = 0"]
     B -- Si --> D[speedBonus segun tiempo transcurrido]
-    D --> E[Penalizacion = 15 x hintsUsed]
-    E --> F[Multiplicador = 1 + 0.1 x min(streak, 5)]
-    F --> G[scoreDelta = max(0, (100 + speedBonus - penalizacion) x multiplicador)]
+    D --> E["Penalizacion = 15 x hintsUsed"]
+    E --> F["Multiplicador = 1 + 0.1 x min(streak, 5)"]
+    F --> G["scoreDelta = max(0, (100 + speedBonus - penalizacion) x multiplicador)"]
     C --> H[Persistir Round RESOLVED + actualizar Match]
     G --> H
 ```
