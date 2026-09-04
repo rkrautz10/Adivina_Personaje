@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../database/prisma.js'
 import { AppError } from '../errors/app-error.js'
 import { createMatch, findMatchForFinish, finishMatch } from './match.repository.js'
+import { expireAbandonedRound } from './abandonment.service.js'
 import { findOrCreatePlayer } from '../players/player.repository.js'
 
 export function normalizeAlias(alias: string): string {
@@ -45,6 +46,7 @@ export async function finishMatchById(matchId: string) {
   try {
     return await prisma.$transaction(
       async (transaction) => {
+        await expireAbandonedRound(transaction, { matchId })
         const match = await findMatchForFinish(transaction, matchId)
 
         if (!match) {

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../database/prisma.js'
 import { findFreshEntity, saveEntity } from '../entities/entity-cache.repository.js'
 import { AppError } from '../errors/app-error.js'
+import { expireAbandonedRound } from '../matches/abandonment.service.js'
 import { PokeApiProvider } from '../providers/pokeapi.provider.js'
 import { calculateScore } from '../scoring/scoring.service.js'
 import { normalizeText } from '../utils/normalize-text.js'
@@ -44,6 +45,12 @@ async function getCharacterForRound() {
 }
 
 export async function createRoundForMatch(matchId: string) {
+  await prisma.$transaction(
+    async (transaction) => {
+      await expireAbandonedRound(transaction, { matchId })
+    },
+    { isolationLevel: 'Serializable' },
+  )
   const match = await findMatchWithRounds(matchId)
 
   if (!match) {
@@ -112,6 +119,7 @@ export async function resolveGuess(roundId: string, guess: string) {
   try {
     return await prisma.$transaction(
       async (transaction) => {
+        await expireAbandonedRound(transaction, { roundId })
         const round = await transaction.round.findUnique({
           where: { id: roundId },
           include: { match: true },

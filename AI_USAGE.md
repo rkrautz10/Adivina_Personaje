@@ -175,6 +175,20 @@ cambio que genero antes de cerrar dicha historia.
 | Resultado | Se actualizaron las instrucciones del proyecto, ADR-09, el flujo del juego y esta bitacora. Las HUs de GitHub se ajustaran con el mismo alcance y dependencias. |
 | Verificacion | Se contrastaron las reglas con el schema Prisma, servicios de rondas, puntaje, partidas y documentacion existente. No se implementaron cambios funcionales en esta actualizacion. |
 
+### I3 - Exponer solicitud de pista
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Exponer hasta tres pistas por ronda con flujo LLM primero, fallback determinista, persistencia y expiracion reutilizable por abandono. |
+| Herramienta | Agente especializado `backend-dominio` con nivel Master, coordinando `llm-seguridad` y `pruebas-calidad`. |
+| Prompt/resumen | Implementar `POST /rounds/:roundId/hints`, validacion anti-spoiler, incremento atomico de `hintsUsed`, persistencia en `Round.hints` y abandono a los 3 minutos sin tocar modos, imagen, dificultad ni formula de puntaje. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: respetar el alcance de I3, validar el contexto antes de editar, conservar la formula de G3 y registrar esta instruccion antes de cerrar la HU. |
+| Decision humana | Aceptado. Se mantuvo la formula vigente de G3 y se eligio derivar el nivel progresivo desde `hintsUsed`, sin confiar en un nivel enviado por el cliente. |
+| Propuesta tecnica | Servicio de pistas transaccional con `Serializable`; intenta `LlmHintProvider`, valida spoiler internamente y usa `FallbackHintProvider` ante error, timeout, salida invalida o spoiler. Servicio reutilizable de abandono conectado a pistas, crear ronda, guess y finish. |
+| Resultado | Se agregaron `POST /rounds/:roundId/hints`, `hint.service.ts`, `hint-validation.ts` y `abandonment.service.ts`. Se actualizaron rutas, servicios de ronda/partida y el contrato de errores. No se agregaron migraciones ni dependencias. |
+| Ajustes o descartes | La expiracion queda filtrada por la ronda o partida solicitada para evitar afectar otra partida activa. No se implementaron modos, obfuscacion, dificultad, ranking, rate limiting ni la alternativa de puntuacion 100/50/20. |
+| Verificacion | `npm test`: 7 pruebas pasan, incluyendo anti-spoiler, fallback y timeout. `npm run build` pasa sin errores. Prueba HTTP real con PostgreSQL: tres pistas devolvieron `hintsUsed=3` y `remainingHints=0`, la cuarta respondió `409`, la respuesta solo expuso `hint`, `hintsUsed` y `remainingHints`, sin `entityName` ni `entityId`. No se uso una clave real ni se llamo a Ollama. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

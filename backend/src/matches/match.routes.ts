@@ -16,7 +16,7 @@ const createMatchSchema = {
 }
 
 const finishMatchSchema = {
-  params: z.object({ matchId: z.string().cuid() }),
+  params: z.object({ matchId: z.string().trim().min(1) }),
 }
 
 export async function registerMatchRoutes(app: FastifyInstance): Promise<void> {
