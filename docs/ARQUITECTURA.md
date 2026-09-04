@@ -12,10 +12,10 @@ es pequeno, por lo que separar por red anadiria complejidad sin beneficio real.
 ## Diagrama de componentes
 
 ```text
-                    ┌────────────────────┐
-                    │      Frontend      │
-                    │ React + TypeScript │
-                    └─────────┬──────────┘
+                    ┌──────────────────────────┐
+                    │      Frontend            │
+                    │ React + TypeScript + Vite│
+                    └─────────┬────────────────┘
                               │
                          HTTP / REST
                               │
@@ -52,7 +52,7 @@ Version equivalente en Mermaid, util para exportar o versionar el diagrama:
 
 ```mermaid
 flowchart LR
-  UI[Frontend React + Vite] -->|HTTP JSON| API[Backend Fastify]
+  UI[Frontend React + TypeScript + Vite] -->|HTTP JSON| API[Backend Fastify]
 
   subgraph Backend
     API --> Routes[routes: matches, rounds]
@@ -90,7 +90,55 @@ flowchart LR
 - `database/prisma.ts`: instancia unica de Prisma Client compartida por toda
   la aplicacion.
 
-## Autoridad del servidor
+## Separacion de responsabilidades
+
+Las dependencias solo fluyen en una direccion: `routes -> services ->
+repositories/providers`. Una capa nunca llama hacia atras ni se salta un
+nivel.
+
+```text
+┌──────────────┐   valida HTTP (Zod)      ┌──────────────┐
+│   routes     │ ───────────────────────▶│   services   │
+│ *.routes.ts  │                          │ *.service.ts │
+└──────────────┘                          └───────┬──────┘
+       ▲                                          │
+       │ nunca accede a Prisma                    │ reglas de negocio,
+       │ ni a providers directamente              │ puntaje, estados,
+       │                                          │ transacciones
+       │                                          ▼
+       │                         ┌──────────────────────────────┐
+       │                         │  repositories / providers    │
+       │                         │ *.repository.ts, providers/  │
+       │                         └───────────┬──────────┬───────┘
+       │                                     │          │
+       │                                     ▼          ▼
+       │                              ┌────────────┐ ┌──────────┐
+       └───────────── responde JSON ──│ PostgreSQL │ │ PokeAPI  │
+                                      └────────────┘ └──────────┘
+```
+
+Reglas concretas que se cumplen hoy en el codigo:
+
+- `routes/*.routes.ts` solo conoce Fastify, Zod (`validateRequest`) y llama a
+  una funcion de `*.service.ts`. No importa `prisma` ni `fetch`.
+- `*/*.service.ts` es el unico lugar que decide resultados: puntaje
+  (`scoring.service.ts`), normalizacion de alias/guess, reglas de estado de
+  `Match`/`Round` y las transacciones Prisma. No conoce Fastify ni `reply`.
+- `*/*.repository.ts` solo hace consultas/escrituras Prisma. No contiene
+  condicionales de negocio (por ejemplo, no decide si una ronda esta
+  vencida).
+- `providers/*` (PokeAPI) y `hints/*` (fallback/LLM) quedan detras de una
+  interfaz (`CharacterProvider`, `HintProvider`) para que el dominio no sepa
+  si los datos vienen de PokeAPI o de otra fuente.
+- `errors/app-error.ts` y `errors/error-handler.ts` son la unica capa que
+  traduce errores de negocio a respuestas HTTP; los servicios lanzan
+  `AppError`, nunca construyen la respuesta ellos mismos.
+
+Esta separacion es la que se muestra y explica en la sustentacion cuando se
+pregunta "por que un monolito modular en vez de microservicios": los limites
+logicos ya existen y serian el punto de corte si el proyecto creciera.
+
+
 
 El cliente nunca envia puntaje, tiempo transcurrido, resultado de una ronda o
 racha. El backend siempre calcula estos valores a partir de:
