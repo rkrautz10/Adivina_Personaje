@@ -13,7 +13,7 @@ function describeHeight(height: number): string {
 }
 
 export class FallbackHintProvider implements HintProvider {
-  generateHint(attributes: HintAttributes, level: HintLevel): string {
+  async generateHint(attributes: HintAttributes, level: HintLevel): Promise<string> {
     switch (level) {
       case 1:
         return attributes.types?.[0]

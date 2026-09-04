@@ -8,5 +8,5 @@ export type HintAttributes = {
 }
 
 export interface HintProvider {
-  generateHint(attributes: HintAttributes, level: HintLevel): string
+  generateHint(attributes: HintAttributes, level: HintLevel): Promise<string>
 }

@@ -149,6 +149,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se persisten pistas en `Round.hints` ni se aplican penalizaciones: esas responsabilidades requieren endpoint e idempotencia y pertenecen a I3. |
 | Verificacion | Prueba directa generó pistas por tipo, altura y habilidad; con atributos incompletos devolvio textos seguros sin error. `npm run build` finalizo sin errores. |
 
+### I2 - Integrar LLM seguro
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Integrar un proveedor LLM intercambiable que genere pistas cortas y mantenga el fallback determinista ante cualquier fallo. |
+| Herramienta | Agente especializado `llm-seguridad` con nivel Master y GitHub Copilot en VS Code. |
+| Prompt/resumen | Reevaluar OpenAI, proveedores cloud con tier gratuito, Ollama local y el flujo LLM primero con fallback, priorizando costo cero, privacidad, latencia, reversibilidad y bajo impacto. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: actuar como `llm-seguridad` Master, reevaluar costos y disponibilidad sin modificar ni instalar antes de la decisión humana; se aceptó implementar Ollama local mediante cliente OpenAI-compatible con fallback obligatorio. |
+| Decision humana | Aceptado. Se eligió Ollama local como proveedor principal sin costo por solicitud, dejando proveedores OpenAI-compatible como alternativa y `FallbackHintProvider` como plan B. |
+| Propuesta tecnica | Convertir `HintProvider.generateHint` a `Promise<string>`; adaptar el fallback sin alterar sus textos; crear `LlmHintProvider` con SDK `openai`, modelo configurable, base URL configurable, timeout de 3 segundos, máximo 60 tokens, temperatura baja y errores tipados. |
+| Resultado | Se agregó `openai`, el proveedor OpenAI-compatible, `HintProviderError`, configuración `AI_MODEL`/`AI_BASE_URL`, pruebas unitarias y el script `npm test`. I2 no agregó endpoint, persistencia, rate limiting, dificultad adaptativa ni cambios en Prisma. |
+| Ajustes o descartes | OpenAI `gpt-4o-mini` quedó como alternativa cloud de pago por uso, no como opción gratuita. Groq y Gemini quedan sujetos a sus tiers y límites vigentes. La validación anti-spoiler final y la orquestación LLM -> fallback pertenecen a I3. |
+| Verificacion | `npm test`: 5 pruebas pasan sin red ni claves reales (configuración ausente, respuesta válida, salida vacía/larga, timeout y fallback asíncrono). `npm run build` pasa sin errores. La API oficial de OpenAI, Gemini, Groq y Ollama fue consultada para distinguir SDK gratuito, API cloud con límites y ejecución local sin costo por solicitud. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
