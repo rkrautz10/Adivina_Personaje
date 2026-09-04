@@ -33,7 +33,7 @@ actualiza si el diseno cambia durante el desarrollo.
         ┌───────────────────────────┐         ┌───────────────────────────┐
         │ 4a. Pedir pista           │         │ 4b. Responder             │
         │ POST /rounds/:id/hints    │         │ POST /rounds/:id/guess    │
-        │ Hint fallback / LLM       │         │ compara server-side       │
+        │ LLM; fallback si falla    │         │ compara server-side       │
         └─────────────┬─────────────┘         └────────────────┬──────────┘
                       │                                        │
                       └───────────────────┬────────────────────┘
@@ -167,7 +167,6 @@ flowchart TD
 flowchart LR
     Attrs[Atributos de EntityCache] --> Provider[HintProvider]
     Provider --> LLM[LlmHintProvider]
-    Provider --> Fallback[FallbackHintProvider]
     LLM -. si falla o hace timeout .-> Fallback
     Fallback --> Level1[Nivel 1: tipo]
     Fallback --> Level2[Nivel 2: rango de tamano]

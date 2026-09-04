@@ -27,8 +27,8 @@ es pequeno, por lo que separar por red anadiria complejidad sin beneficio real.
                     │ Round                │
                     │ EntityCache          │
                     │ Scoring              │
-                    │ Hint (fallback)      │
                     │ Hint LLM             │
+                    │ Hint fallback        │
                     │ Difficulty           │
                     │ Ranking              │
                     └─────┬────────┬───────┘
@@ -54,11 +54,13 @@ flowchart LR
     Routes --> Services[services: match, round, scoring, hints]
     Services --> Repos[repositories Prisma]
     Services --> Providers[providers externos]
+    Services --> HintProvider[HintProvider]
+    HintProvider --> LLM[Proveedor LLM]
+    LLM -. falla o timeout .-> Fallback[Fallback determinista]
   end
 
   Repos --> DB[(PostgreSQL)]
   Providers --> PokeAPI[PokeAPI]
-  Providers --> LLM[Proveedor LLM]
 ```
 
 ## Capas del backend
