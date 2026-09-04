@@ -1,7 +1,6 @@
 # Arquitectura - Adivina Personaje
 
-Estado: refleja lo implementado hasta las HU F1-F3, G1-G4 e I1 (fallback de pistas).
-I2 (LLM) e I3 (endpoint de pistas) aun no estan implementadas.
+Este documento describe la arquitectura del sistema y sus responsabilidades.
 
 ## Estilo arquitectonico
 
@@ -29,24 +28,20 @@ es pequeno, por lo que separar por red anadiria complejidad sin beneficio real.
                     │ EntityCache          │
                     │ Scoring              │
                     │ Hint (fallback)      │
-                    │ Hint LLM   (I2, WIP) │
-                    │ Difficulty (D1, WIP) │
-                    │ Ranking    (X1, WIP) │
+                    │ Hint LLM             │
+                    │ Difficulty           │
+                    │ Ranking              │
                     └─────┬────────┬───────┘
                           │        │
                 ┌─────────▼───┐ ┌──▼──────────────┐
                 │ PostgreSQL  │ │  AI Provider    │
-                │             │ │  (I2, pendiente)│
+                │             │ │                 │
                 └─────────────┘ └─────────────────┘
                           │
                     ┌─────▼──────┐
                     │  PokeAPI   │
                     └────────────┘
 ```
-
-Los modulos marcados `(WIP)` o `(pendiente)` estan definidos en el diseno
-pero no tienen codigo todavia; se documentan aqui para mostrar donde
-encajaran sin implicar que ya funcionan.
 
 Version equivalente en Mermaid, util para exportar o versionar el diagrama:
 
@@ -63,7 +58,7 @@ flowchart LR
 
   Repos --> DB[(PostgreSQL)]
   Providers --> PokeAPI[PokeAPI]
-  Providers -. futuro I2 .-> LLM[Proveedor LLM]
+  Providers --> LLM[Proveedor LLM]
 ```
 
 ## Capas del backend
@@ -80,8 +75,8 @@ flowchart LR
 - `providers/`: integraciones externas (PokeAPI). Encapsuladas detras de una
   interfaz (`CharacterProvider`) para poder sustituirlas sin tocar el dominio.
 - `hints/`: contrato `HintProvider` y su implementacion `FallbackHintProvider`,
-  deterministica y sin red. Preparada para admitir un proveedor LLM (I2) que
-  implemente el mismo contrato.
+  deterministica y sin red, integrada con el proveedor de inteligencia
+  artificial mediante el mismo contrato.
 - `errors/`: `AppError` tipado y un manejador central Fastify que traduce
   errores de dominio, Zod y errores nativos de Fastify a un contrato JSON
   unico.
@@ -197,6 +192,6 @@ filtro de estado esperado). Esto evita:
   `502 / UPSTREAM_UNAVAILABLE`.
 - Cache de entidades para reducir dependencia de PokeAPI en solicitudes
   repetidas.
-- Generador de pistas por fallback determinista (I1), sin red ni dependencia
-  externa, pensado para que el juego nunca se rompa si el futuro proveedor
-  LLM (I2) falla o no esta configurado.
+- Generador de pistas por fallback determinista, sin red ni dependencia
+  externa, que mantiene disponible el juego cuando el proveedor de
+  inteligencia artificial no responde.
