@@ -72,6 +72,8 @@ flowchart LR
 - `*/*.repository.ts`: acceso a datos con Prisma Client. Sin logica de negocio.
 - `players/`: repositorio de jugadores; crea o reutiliza un `Player` por
   `normalizedAlias` (evita duplicados por mayusculas/espacios).
+- `difficulty/`: calcula el siguiente nivel desde las tres rondas resueltas
+  mas recientes y define los rangos de seleccion por dificultad.
 - `entities/`: repositorio de `EntityCache`; busca cache vigente por TTL y
   guarda los atributos normalizados obtenidos de PokeAPI.
 - `providers/`: integraciones externas (PokeAPI). Encapsuladas detras de una

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 
 import { prisma } from '../database/prisma.js'
 import { findFreshEntity, saveEntity } from '../entities/entity-cache.repository.js'
+import { calculateNextDifficulty, getCharacterIdRange } from '../difficulty/difficulty.service.js'
 import { AppError } from '../errors/app-error.js'
 import { expireAbandonedRound } from '../matches/abandonment.service.js'
 import { PokeApiProvider } from '../providers/pokeapi.provider.js'
@@ -10,20 +11,20 @@ import { normalizeText } from '../utils/normalize-text.js'
 import { obfuscateImage } from './image-obfuscation.js'
 import { createRound, findMatchWithRounds, findRoundImage, resolveRound } from './round.repository.js'
 
-const EASY_ID_MAX = 151
 const MAX_SELECTION_ATTEMPTS = 3
 const MAX_ROUNDS_PER_MATCH = 10
 const CACHE_TTL_MS = 24 * 60 * 60 * 1_000
 
 const characterProvider = new PokeApiProvider()
 
-function pickEasyCharacterId(): number {
-  return Math.floor(Math.random() * EASY_ID_MAX) + 1
+function pickCharacterId(difficultyLevel: 'EASY' | 'MEDIUM' | 'HARD'): number {
+  const range = getCharacterIdRange(difficultyLevel)
+  return Math.floor(Math.random() * (range.max - range.min + 1)) + range.min
 }
 
-async function getCharacterForRound() {
+async function getCharacterForRound(difficultyLevel: 'EASY' | 'MEDIUM' | 'HARD') {
   for (let attempt = 0; attempt < MAX_SELECTION_ATTEMPTS; attempt += 1) {
-    const entityId = pickEasyCharacterId()
+    const entityId = pickCharacterId(difficultyLevel)
     const cachedEntity = await findFreshEntity(entityId)
 
     if (cachedEntity) {
@@ -70,7 +71,7 @@ export async function createRoundForMatch(matchId: string) {
     throw new AppError(409, 'CONFLICT', 'Match reached its round limit')
   }
 
-  const entity = await getCharacterForRound()
+  const entity = await getCharacterForRound(match.difficultyLevel)
 
   try {
     const round = await createRound(match.id, match.rounds.length + 1, entity.entityId, entity.name)
@@ -167,11 +168,24 @@ export async function resolveGuess(roundId: string, guess: string) {
         const shouldFinish =
           (round.match.gameMode === 'STANDARD' && round.roundNumber === MAX_ROUNDS_PER_MATCH) ||
           (round.match.gameMode === 'STREAK' && !correct)
+        const recentRounds = await transaction.round.findMany({
+          where: { matchId: round.matchId, status: 'RESOLVED' },
+          orderBy: { roundNumber: 'desc' },
+          take: 3,
+          select: { correct: true },
+        })
+        const nextDifficulty = shouldFinish
+          ? round.match.difficultyLevel
+          : calculateNextDifficulty(
+              round.match.difficultyLevel,
+              recentRounds.map((recentRound) => recentRound.correct === true),
+            )
         const match = await transaction.match.update({
           where: { id: round.matchId },
           data: {
             currentStreak: score.nextStreak,
             totalScore: { increment: score.scoreDelta },
+            difficultyLevel: nextDifficulty,
             ...(shouldFinish ? { status: 'FINISHED', finishedAt: new Date() } : {}),
           },
         })

@@ -216,6 +216,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | Se conservan formula de puntaje, tiempo de bonus, abandono, pistas, Sharp, dificultad, ranking, frontend y autenticacion. No se agrego una tabla para modos. |
 | Verificacion | Migracion aplicada y Prisma Client generado. `npm test`: 11 pruebas pasan. `npm run build` pasa. HTTP real: default `STANDARD`; `STREAK` con fallo devuelve `FINISHED` y bloquea nueva ronda con `409`; diez rondas `STANDARD` terminan en `FINISHED` y bloquean la ronda 11 con `409`. |
 
+### D1 - Calcular dificultad adaptativa
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Ajustar la dificultad de la siguiente ronda desde el rendimiento reciente sin alterar puntaje, modos ni tiempos. |
+| Herramienta | Agente `backend-dominio` nivel Master, coordinando `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Usar tres rondas resueltas, cambiar como maximo un nivel y seleccionar IDs por rangos `EASY`/`MEDIUM`/`HARD` sin migraciones ni cambios de contrato ajenos. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar contexto antes de editar, conservar los modos, puntuacion, pistas, imagen y tiempos, y documentar la regla adaptativa. |
+| Decision humana | Aceptado. Tres aciertos suben un nivel; cero o uno bajan; dos mantienen; menos de tres no cambian. |
+| Propuesta tecnica | Servicio puro de dificultad con rangos nombrados, integrado dentro de la transaccion `Serializable` de `resolveGuess`; la siguiente ronda usa el nivel persistido. |
+| Resultado | Se agregaron `difficulty.service.ts` y pruebas. La dificultad se actualiza tras resolver, excepto cuando la partida finaliza por modo. Crear ronda selecciona IDs por el rango de la dificultad actual. |
+| Ajustes o descartes | No se agregaron migraciones, dependencias ni cambios en puntaje, abandono, modos, pistas, Sharp, ranking, frontend o autenticacion. |
+| Verificacion | `npm test`: 16 pruebas pasan. `npm run build` pasa. HTTP real: tres aciertos consecutivos en `STREAK` hicieron que la siguiente ronda respondiera `difficultyLevel: MEDIUM`. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

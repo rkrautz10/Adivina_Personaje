@@ -210,3 +210,8 @@ Los modos se persisten en `Match`: `STANDARD` finaliza al resolver la ronda 10
 y `STREAK` finaliza al primer fallo. La respuesta de `guess` incluye
 `matchStatus` y `gameMode` para que el cliente no solicite otra ronda cuando
 la partida ya finalizo.
+
+La dificultad se recalcula despues de cada ronda resuelta con una ventana de
+tres resultados: tres aciertos suben un nivel, cero o uno bajan un nivel y dos
+mantienen el nivel. La siguiente ronda usa el rango de IDs del nivel persistido;
+esta regla no modifica el bonus de 30 segundos ni el abandono de 3 minutos.

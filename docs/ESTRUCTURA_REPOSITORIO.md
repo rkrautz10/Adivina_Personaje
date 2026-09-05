@@ -29,6 +29,8 @@ Adivina_Personaje/
 │       ├── server.ts          # Bootstrap Fastify, registro de rutas y CORS
 │       ├── config/
 │       │   └── env.ts         # Validacion de variables de entorno (Zod)
+│       ├── difficulty/
+│       │   └── difficulty.service.ts # Ventana adaptativa y rangos de IDs
 │       ├── database/
 │       │   └── prisma.ts      # Instancia unica de Prisma Client
 │       ├── errors/

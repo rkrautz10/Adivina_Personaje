@@ -333,6 +333,30 @@ partida `FINISHED` bloquea nuevas rondas en ambos modos.
 
 ---
 
+## ADR-12: Dificultad adaptativa por ventana de tres rondas
+
+**Contexto:** `Match` ya persiste `difficultyLevel`, pero la seleccion de
+entidades no utilizaba ese valor. El reto exige que la dificultad afecte el
+juego sin alterar la formula de puntaje, los modos ni los dos tiempos.
+
+**Decision:** despues de resolver una ronda y dentro de la misma transaccion,
+se revisan las tres rondas resueltas mas recientes. Tres aciertos suben un
+nivel, cero o un acierto bajan un nivel y dos aciertos mantienen el nivel.
+Con menos de tres rondas no hay cambio. Los limites son `EASY` 1-151,
+`MEDIUM` 152-493 y `HARD` 494-1025; cada evaluacion cambia como maximo un
+nivel.
+
+**Por que:** la ventana corta es facil de explicar, responde rapidamente al
+rendimiento reciente y limita oscilaciones. Aplicarla dentro de la transaccion
+de `guess` evita que solicitudes concurrentes calculen dos cambios sobre el
+mismo resultado.
+
+**Consecuencias:** la siguiente ronda usa el rango de la dificultad persistida.
+`STANDARD` y `STREAK` conservan sus cierres; la dificultad no cambia cuando
+la ronda resuelta finaliza la partida.
+
+---
+
 ## Evolucion futura del producto
 
 Ideas que van mas alla del alcance de la prueba tecnica, para un contexto de
