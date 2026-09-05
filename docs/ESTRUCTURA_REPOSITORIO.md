@@ -49,6 +49,7 @@ Adivina_Personaje/
 │       │   └── entity-cache.repository.ts # Cache de entidades (TTL)
 │       ├── rounds/
 │       │   ├── round.repository.ts  # Acceso a datos de Round
+│       │   ├── image-obfuscation.ts # Procesa artwork con Sharp en memoria
 │       │   ├── round.service.ts     # Crear ronda, servir imagen, resolver guess
 │       │   └── round.routes.ts      # POST rounds, GET image, POST guess
 │       ├── scoring/

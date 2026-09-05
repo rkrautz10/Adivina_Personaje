@@ -7,6 +7,7 @@ import { expireAbandonedRound } from '../matches/abandonment.service.js'
 import { PokeApiProvider } from '../providers/pokeapi.provider.js'
 import { calculateScore } from '../scoring/scoring.service.js'
 import { normalizeText } from '../utils/normalize-text.js'
+import { obfuscateImage } from './image-obfuscation.js'
 import { createRound, findMatchWithRounds, findRoundImage, resolveRound } from './round.repository.js'
 
 const EASY_ID_MAX = 151
@@ -98,6 +99,10 @@ export async function getRoundImage(roundId: string) {
     throw new AppError(404, 'NOT_FOUND', 'Round not found')
   }
 
+  if (round.status === 'EXPIRED') {
+    throw new AppError(409, 'CONFLICT', 'Round expired without revealing its entity')
+  }
+
   let response: Response
   try {
     response = await fetch(round.entity.imageUrl, { signal: AbortSignal.timeout(3_000) })
@@ -109,9 +114,22 @@ export async function getRoundImage(roundId: string) {
     throw new AppError(502, 'UPSTREAM_UNAVAILABLE', 'Character image is unavailable')
   }
 
-  return {
-    contentType: response.headers.get('content-type') ?? 'image/png',
-    image: Buffer.from(await response.arrayBuffer()),
+  const image = Buffer.from(await response.arrayBuffer())
+
+  if (round.status === 'RESOLVED') {
+    return {
+      contentType: response.headers.get('content-type') ?? 'image/png',
+      image,
+    }
+  }
+
+  try {
+    return {
+      contentType: 'image/png',
+      image: await obfuscateImage(image),
+    }
+  } catch {
+    throw new AppError(502, 'UPSTREAM_UNAVAILABLE', 'Character image could not be transformed')
   }
 }
 

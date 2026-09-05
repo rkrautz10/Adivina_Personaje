@@ -189,6 +189,19 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | La expiracion queda filtrada por la ronda o partida solicitada para evitar afectar otra partida activa. No se implementaron modos, obfuscacion, dificultad, ranking, rate limiting ni la alternativa de puntuacion 100/50/20. |
 | Verificacion | `npm test`: 7 pruebas pasan, incluyendo anti-spoiler, fallback y timeout. `npm run build` pasa sin errores. Prueba HTTP real con PostgreSQL: tres pistas devolvieron `hintsUsed=3` y `remainingHints=0`, la cuarta respondió `409`, la respuesta solo expuso `hint`, `hintsUsed` y `remainingHints`, sin `entityName` ni `entityId`. No se uso una clave real ni se llamo a Ollama. |
 
+### Correccion transversal G2 - imagen obfuscada server-side
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Evitar que una ronda activa exponga el artwork original y revelar la imagen solo despues de resolver. |
+| Herramienta | Agente `backend-dominio` nivel Master, coordinando `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Evaluar compatibilidad y alternativas antes de usar Sharp; procesar la imagen en backend, mantener la ruta y definir revelacion por estado. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: validar Sharp antes de instalarlo, no delegar la obfuscacion al frontend, documentar la decision y conservar la ruta existente. |
+| Decision humana | Aceptado. Se eligio Sharp por compatibilidad con Node 24, rendimiento sobre buffers y bajo impacto; Jimp, Canvas y filtros en frontend se descartaron. |
+| Propuesta tecnica | Procesar en memoria el buffer con escala de grises, reduccion, blur y PNG sin metadata para `ACTIVE`; entregar original en `RESOLVED` y rechazar `EXPIRED` con `409`. |
+| Resultado | Se agregaron Sharp, `image-obfuscation.ts` y pruebas de transformación. `GET /rounds/:roundId/image` conserva su ruta y aplica la regla de revelacion por estado. No se modificaron Prisma, puntaje, pistas, abandono, modos, dificultad, ranking ni frontend. |
+| Verificacion | `npm test`: 9 pruebas pasan; el transformador produce PNG, reduce a 96 px de ancho, cambia el buffer y rechaza datos invalidos. Prueba HTTP real de ronda `ACTIVE`: `GET /rounds/:roundId/image` devolvio `image/png` con firma PNG y buffer procesado. `npm run build` se ejecuta antes del cierre. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

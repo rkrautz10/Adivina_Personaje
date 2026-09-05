@@ -132,6 +132,9 @@ Reglas vigentes:
 
 - Solo puede existir una ronda `ACTIVE` por partida (garantizado por indice
   unico parcial en PostgreSQL).
+- `GET /rounds/:roundId/image` entrega PNG obfuscado mientras la ronda esta
+    `ACTIVE`, la imagen original cuando esta `RESOLVED` y `409 / CONFLICT` cuando
+    esta `EXPIRED`; una ronda abandonada no revela la entidad.
 - Una ronda `RESOLVED` no puede volver a puntuar: una segunda conjetura
   responde `409 / CONFLICT`.
 - Una ronda que supera 3 minutos sin resolverse se marca `EXPIRED` con
