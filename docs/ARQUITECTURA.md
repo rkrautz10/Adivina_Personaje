@@ -153,7 +153,7 @@ versiona con migraciones Prisma. Entidades principales:
 
 - `Player`: alias visible y `normalizedAlias` unico para evitar duplicados
   por mayusculas o espacios.
-- `Match`: estado de partida, dificultad, racha y puntaje total.
+- `Match`: estado, modo de partida, dificultad, racha y puntaje total.
 - `Round`: ronda de una partida, entidad oculta, estado, pistas usadas y
   resultado.
 - `EntityCache`: cache de atributos de PokeAPI con expiracion (TTL 24h), para

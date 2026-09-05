@@ -310,6 +310,29 @@ posterior usa la misma URL y el estado ya persistido de la ronda.
 
 ---
 
+## ADR-11: Modos de partida persistidos en Match
+
+**Contexto:** el bucle del juego permite una partida de 10 rondas o una racha
+infinita hasta el primer fallo. Un limite global de 10 rondas no representa el
+modo de racha y deja al frontend sin autoridad para conocer cuando una partida
+termina automaticamente.
+
+**Decision:** `Match.gameMode` usa el enum `GameMode` con `STANDARD` como
+default y `STREAK` como alternativa. `STANDARD` finaliza en la ronda 10;
+`STREAK` finaliza al primer fallo. Ambos modos finalizan por abandono. La
+respuesta de `guess` incluye `matchStatus` y `gameMode`.
+
+**Por que:** persistir la decision en la partida permite que el backend aplique
+las reglas dentro de la misma transaccion que resuelve la ronda, evita que el
+cliente decida continuar y mantiene las partidas existentes compatibles con el
+default `STANDARD`.
+
+**Consecuencias:** se agrega una migracion Prisma sin tabla adicional. Crear
+partida acepta `gameMode` opcional. Crear ronda limita solo `STANDARD`; una
+partida `FINISHED` bloquea nuevas rondas en ambos modos.
+
+---
+
 ## Evolucion futura del producto
 
 Ideas que van mas alla del alcance de la prueba tecnica, para un contexto de

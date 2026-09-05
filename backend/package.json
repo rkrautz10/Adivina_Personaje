@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc --noEmit",
-    "test": "node --import tsx --test src/hints/*.test.ts src/rounds/*.test.ts",
+    "test": "node --import tsx --test src/hints/*.test.ts src/matches/*.test.ts src/rounds/*.test.ts",
     "start": "tsx src/server.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

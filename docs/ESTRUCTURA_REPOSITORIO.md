@@ -23,7 +23,7 @@ Adivina_Personaje/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── prisma/
-│   │   ├── schema.prisma      # Modelo de datos (Player, Match, Round, EntityCache)
+│   │   ├── schema.prisma      # Modelo de datos y enum GameMode
 │   │   └── migrations/        # Historial de migraciones aplicadas
 │   └── src/
 │       ├── server.ts          # Bootstrap Fastify, registro de rutas y CORS

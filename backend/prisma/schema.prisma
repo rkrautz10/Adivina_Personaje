@@ -12,6 +12,11 @@ enum MatchStatus {
   FINISHED
 }
 
+enum GameMode {
+  STANDARD
+  STREAK
+}
+
 enum DifficultyLevel {
   EASY
   MEDIUM
@@ -36,6 +41,7 @@ model Match {
   id              String          @id @default(cuid())
   playerId        String
   status          MatchStatus     @default(IN_PROGRESS)
+  gameMode        GameMode        @default(STANDARD)
   difficultyLevel DifficultyLevel @default(EASY)
   currentStreak   Int             @default(0)
   totalScore      Int             @default(0)

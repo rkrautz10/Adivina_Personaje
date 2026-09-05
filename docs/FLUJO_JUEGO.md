@@ -205,3 +205,8 @@ controladas:
 Los dos relojes son independientes: 30 segundos limitan el bonus de velocidad
 y 3 minutos determinan abandono. La formula vigente de G3 se mantiene; la
 alternativa de puntos base 100/50/20 no forma parte de este alcance.
+
+Los modos se persisten en `Match`: `STANDARD` finaliza al resolver la ronda 10
+y `STREAK` finaliza al primer fallo. La respuesta de `guess` incluye
+`matchStatus` y `gameMode` para que el cliente no solicite otra ronda cuando
+la partida ya finalizo.

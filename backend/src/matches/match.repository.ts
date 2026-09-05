@@ -2,9 +2,9 @@ import type { Prisma } from '@prisma/client'
 
 import { prisma } from '../database/prisma.js'
 
-export function createMatch(playerId: string) {
+export function createMatch(playerId: string, gameMode: 'STANDARD' | 'STREAK') {
   return prisma.match.create({
-    data: { playerId },
+    data: { playerId, gameMode },
   })
 }
 

@@ -202,6 +202,20 @@ cambio que genero antes de cerrar dicha historia.
 | Resultado | Se agregaron Sharp, `image-obfuscation.ts` y pruebas de transformación. `GET /rounds/:roundId/image` conserva su ruta y aplica la regla de revelacion por estado. No se modificaron Prisma, puntaje, pistas, abandono, modos, dificultad, ranking ni frontend. |
 | Verificacion | `npm test`: 9 pruebas pasan; el transformador produce PNG, reduce a 96 px de ancho, cambia el buffer y rechaza datos invalidos. Prueba HTTP real de ronda `ACTIVE`: `GET /rounds/:roundId/image` devolvio `image/png` con firma PNG y buffer procesado. `npm run build` se ejecuta antes del cierre. |
 
+### G5 - Configurar modos STANDARD y STREAK
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Persistir los modos `STANDARD` y `STREAK` y aplicar sus reglas de finalizacion exclusivamente en backend. |
+| Herramienta | Agente `backend-dominio` nivel Master, coordinando `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Agregar `GameMode` en Prisma, seleccionar modo al crear la partida, cerrar `STANDARD` en ronda 10 y `STREAK` al primer fallo, sin modificar pistas, imagen, puntaje, tiempos, dificultad, ranking ni frontend. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: aplicar los modos persistidos, usar transacciones y actualizaciones condicionadas, incluir estado final de partida en `guess` y documentar la decision. |
+| Decision humana | Aceptado. `STANDARD` es el default compatible; `STREAK` no tiene limite fijo y termina al primer fallo; ambos terminan por abandono. |
+| Propuesta tecnica | Enum Prisma `GameMode`, campo `Match.gameMode`, migracion con default, validacion Zod de `gameMode`, limite de 10 solo para `STANDARD` y finalizacion en la transaccion de `resolveGuess`. |
+| Resultado | Se creó y aplicó la migracion `20260905225650_add_game_mode`; crear partida devuelve `gameMode`; `guess` devuelve `matchStatus` y `gameMode`; los cierres automaticos se aplican por modo. |
+| Ajustes o descartes | Se conservan formula de puntaje, tiempo de bonus, abandono, pistas, Sharp, dificultad, ranking, frontend y autenticacion. No se agrego una tabla para modos. |
+| Verificacion | Migracion aplicada y Prisma Client generado. `npm test`: 11 pruebas pasan. `npm run build` pasa. HTTP real: default `STANDARD`; `STREAK` con fallo devuelve `FINISHED` y bloquea nueva ronda con `409`; diez rondas `STANDARD` terminan en `FINISHED` y bloquean la ronda 11 con `409`. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

@@ -10,16 +10,17 @@ export function normalizeAlias(alias: string): string {
   return alias.trim().toLocaleLowerCase('es')
 }
 
-export async function createMatchForAlias(alias: string) {
+export async function createMatchForAlias(alias: string, gameMode: 'STANDARD' | 'STREAK' = 'STANDARD') {
   const visibleAlias = alias.trim()
   const player = await findOrCreatePlayer(visibleAlias, normalizeAlias(visibleAlias))
-  const match = await createMatch(player.id)
+  const match = await createMatch(player.id, gameMode)
 
   return {
     matchId: match.id,
     playerId: player.id,
     alias: player.alias,
     status: match.status,
+    gameMode: match.gameMode,
     difficultyLevel: match.difficultyLevel,
     totalScore: match.totalScore,
     startedAt: match.startedAt,

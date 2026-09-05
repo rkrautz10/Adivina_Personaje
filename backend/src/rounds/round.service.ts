@@ -66,7 +66,7 @@ export async function createRoundForMatch(matchId: string) {
     throw new AppError(409, 'CONFLICT', 'Match already has an active round')
   }
 
-  if (match.rounds.length >= MAX_ROUNDS_PER_MATCH) {
+  if (match.gameMode === 'STANDARD' && match.rounds.length >= MAX_ROUNDS_PER_MATCH) {
     throw new AppError(409, 'CONFLICT', 'Match reached its round limit')
   }
 
@@ -164,11 +164,15 @@ export async function resolveGuess(roundId: string, guess: string) {
           throw new AppError(409, 'CONFLICT', 'Round is not active')
         }
 
+        const shouldFinish =
+          (round.match.gameMode === 'STANDARD' && round.roundNumber === MAX_ROUNDS_PER_MATCH) ||
+          (round.match.gameMode === 'STREAK' && !correct)
         const match = await transaction.match.update({
           where: { id: round.matchId },
           data: {
             currentStreak: score.nextStreak,
             totalScore: { increment: score.scoreDelta },
+            ...(shouldFinish ? { status: 'FINISHED', finishedAt: new Date() } : {}),
           },
         })
 
@@ -179,6 +183,8 @@ export async function resolveGuess(roundId: string, guess: string) {
           totalScore: match.totalScore,
           currentStreak: match.currentStreak,
           roundStatus: 'RESOLVED' as const,
+          matchStatus: match.status,
+          gameMode: match.gameMode,
         }
       },
       { isolationLevel: 'Serializable' },
