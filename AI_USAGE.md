@@ -286,6 +286,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se modificaron rutas, Prisma, frontend, puntaje, pistas, modos, dificultad ni ranking. No se uso segmentacion por IA ni filtros en cliente. |
 | Verificacion | `npm test`: 17 pruebas pasan; fixture transparente valida fondo uniforme y silueta sin color original. `npm run build` pasa. Inspeccion visual de una ronda real confirma una silueta definida servida por backend. |
 
+### Q1 - Pruebas de dominio
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear una suite de pruebas unitarias puras y aisladas sin I/O ni dependencias externas para blindar las reglas de dominio del backend. |
+| Herramienta | Agente especializado `pruebas-calidad` nivel Master, coordinando `backend-dominio` y `arquitectura-documentacion`. |
+| Prompt/resumen | Implementar pruebas para `scoring.service.ts` y `normalize-text.ts`, y unificar la ejecucion del runner con `node --import tsx --test src/**/*.test.ts`. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: crear pruebas puras sin red ni base de datos, validar limites de racha, decaimiento de tiempo, penalizaciones por pistas y normalizacion de texto. |
+| Decision humana | Aceptado. Las pruebas de dominio se mantienen aisladas y ejecutan en < 2 segundos. |
+| Propuesta tecnica | Pruebas con `node:test` y `node:assert/strict` para `calculateScore` (bonus 30s, racha max 5, penalizacion pistas, piso 0) y `normalizeText` (trim, lowercase, diacriticos). |
+| Resultado | Se crearon `scoring.service.test.ts` y `normalize-text.test.ts`. Se actualizo el script `"test"` en `package.json` para ejecutar todas las pruebas bajo `src/**/*.test.ts`. |
+| Ajustes o descartes | No se modifico la logica de negocio existente, constantes ni firmas. No se requirió PostgreSQL ni Docker para la ejecucion de la suite de dominio. |
+| Verificacion | `npm test` ejecuta exitosamente las 27 pruebas unitarias en ~1.1 segundos. `npm run build` pasa sin errores de TypeScript. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
