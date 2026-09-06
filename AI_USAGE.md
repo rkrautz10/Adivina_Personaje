@@ -244,6 +244,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se agregaron dependencias, imagenes de Pokemon, rondas, pistas, guess, resultado, ranking ni logica de negocio en frontend. La prueba con `127.0.0.1` revelo CORS por diferir de `FRONTEND_ORIGIN`; se usa `http://localhost:5173` como URL de prueba. |
 | Verificacion | `npm run lint` y `npm run build` pasan. Pruebas manuales en navegador: alias `Misty` con modo `STREAK` y alias `Brock` con modo `STANDARD`, ambas partidas creadas con estado `IN_PROGRESS` y dificultad `EASY`. Vista movil de 390 px sin overflow horizontal. |
 
+### U2 - Pantalla de ronda
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Extender U1 para crear y jugar una ronda con imagen obfuscada, contador visual, pistas y conjetura. |
+| Herramienta | Agente `frontend-juego` nivel Master, coordinando `backend-dominio`, `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Consumir los endpoints de ronda, imagen, pistas y guess sin trasladar reglas de puntaje, tiempo, expiracion, modos o dificultad al cliente. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: crear la primera ronda automaticamente, cargar imagen desde backend, usar el contador solo como orientacion y documentar como realizar pruebas manuales. |
+| Decision humana | Aceptado. La imagen se descarga como Blob para interpretar `409`; el cliente bloquea controles segun las respuestas del servidor y no crea otra ronda cuando recibe `FINISHED`. |
+| Propuesta tecnica | Estado React para partida, ronda, imagen, pistas, contador y resultado; `fetch` para API y Blob URL para imagen; los botones se bloquean durante solicitudes concurrentes. |
+| Resultado | Tras crear una partida, U2 crea la primera ronda, muestra PNG obfuscado, contador de 30 segundos, tres pistas progresivas y formulario de conjetura. Tras resolver, recarga la misma URL para revelar la imagen original y muestra el resultado transitorio. |
+| Ajustes o descartes | No se modificaron backend, Prisma, LLM, fallback, reglas de pistas, Sharp, puntaje, modos, dificultad, ranking ni autenticacion. El contador de 3 minutos no se implementa como autoridad local; el backend resuelve `EXPIRED`. |
+| Verificacion | `npm run lint` y `npm run build` pasan. Prueba manual `STANDARD`: primera ronda creada, imagen activa, tres pistas y cuarta bloqueada. Prueba manual `STREAK`: fallo devuelve `FINISHED`, revela entidad e imagen y deshabilita acciones sin crear otra ronda. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

@@ -39,19 +39,15 @@ npm run db:migrate -- --name init
 En dos terminales:
 
 ```powershell
-cd frontend
-npm install
-npm run dev
+npm.cmd --prefix backend run start
 ```
 
 ```powershell
-cd backend
-Copy-Item .env.example .env
-npm install
-npm run dev
+npm.cmd --prefix frontend run dev -- --host localhost
 ```
 
-El backend expone `GET http://localhost:3001/health` para comprobar el arranque.
+Abre `http://localhost:5173` para jugar. El backend expone
+`GET http://localhost:3001/health` para comprobar el arranque.
 La configuracion valida `DATABASE_URL` y `FRONTEND_ORIGIN` al iniciar; el
 servidor no arranca si falta alguna de estas variables requeridas.
 
@@ -63,6 +59,8 @@ servidor no arranca si falta alguna de estas variables requeridas.
 	exponer el identificador de PokéAPI.
 - `POST /rounds/:roundId/guess`: resuelve una conjetura y calcula el puntaje
 	exclusivamente en el backend.
+- `POST /rounds/:roundId/hints`: solicita una pista progresiva; usa fallback
+	cuando el LLM no esta disponible.
 - `POST /matches/:matchId/finish`: finaliza una partida sin ronda activa de
 	forma idempotente.
 

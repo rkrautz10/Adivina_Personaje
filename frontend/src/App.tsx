@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 type GameMode = 'STANDARD' | 'STREAK'
@@ -16,6 +16,32 @@ type MatchResponse = {
 
 type ErrorResponse = { message?: string }
 
+type RoundResponse = {
+  roundId: string
+  roundNumber: number
+  imageUrl: string
+  obfuscationLevel: 'HIGH'
+  timeLimitMs: number
+  difficultyLevel: 'EASY' | 'MEDIUM' | 'HARD'
+}
+
+type HintResponse = {
+  hint: string
+  hintsUsed: number
+  remainingHints: number
+}
+
+type GuessResponse = {
+  correct: boolean
+  revealedName: string
+  scoreDelta: number
+  totalScore: number
+  currentStreak: number
+  roundStatus: 'RESOLVED'
+  matchStatus: 'IN_PROGRESS' | 'FINISHED'
+  gameMode: GameMode
+}
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 const aliasPattern = /^[\p{L}\p{N}_ -]+$/u
 
@@ -23,8 +49,97 @@ function App() {
   const [alias, setAlias] = useState('')
   const [gameMode, setGameMode] = useState<GameMode>('STANDARD')
   const [match, setMatch] = useState<MatchResponse | null>(null)
+  const [round, setRound] = useState<RoundResponse | null>(null)
+  const [hints, setHints] = useState<string[]>([])
+  const [guess, setGuess] = useState('')
+  const [result, setResult] = useState<GuessResponse | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [secondsRemaining, setSecondsRemaining] = useState(30)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingRound, setIsLoadingRound] = useState(false)
+  const [isLoadingHint, setIsLoadingHint] = useState(false)
+  const [isResolvingGuess, setIsResolvingGuess] = useState(false)
+  const [isExpired, setIsExpired] = useState(false)
+  const imageObjectUrl = useRef<string | null>(null)
+
+  function setSafeError(message: string) {
+    setError(message)
+  }
+
+  function isConflict(response: Response, payload: ErrorResponse): boolean {
+    return response.status === 409 && Boolean(payload.message)
+  }
+
+  async function readImage(roundId: string) {
+    const response = await fetch(`${API_URL}/rounds/${roundId}/image`)
+    if (!response.ok) {
+      const payload = (await response.json()) as ErrorResponse
+      if (isConflict(response, payload)) {
+        setIsExpired(true)
+      }
+      throw new Error(payload.message ?? 'No fue posible cargar la imagen de la ronda.')
+    }
+
+    const image = await response.blob()
+    const nextObjectUrl = URL.createObjectURL(image)
+    if (imageObjectUrl.current) {
+      URL.revokeObjectURL(imageObjectUrl.current)
+    }
+    imageObjectUrl.current = nextObjectUrl
+    setImageUrl(nextObjectUrl)
+  }
+
+  async function createRound(matchId: string) {
+    setIsLoadingRound(true)
+    setError(null)
+    setResult(null)
+    setHints([])
+    setGuess('')
+    setIsExpired(false)
+
+    try {
+      const response = await fetch(`${API_URL}/matches/${matchId}/rounds`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      })
+      const payload = (await response.json()) as RoundResponse | ErrorResponse
+      if (!response.ok) {
+        if (isConflict(response, payload as ErrorResponse)) {
+          setIsExpired(true)
+        }
+        throw new Error('message' in payload && payload.message ? payload.message : 'No fue posible crear la ronda.')
+      }
+
+      const nextRound = payload as RoundResponse
+      setRound(nextRound)
+      setSecondsRemaining(Math.ceil(nextRound.timeLimitMs / 1000))
+      await readImage(nextRound.roundId)
+    } catch (requestError) {
+      setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible crear la ronda.')
+    } finally {
+      setIsLoadingRound(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!round || result || isExpired || secondsRemaining === 0) {
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      setSecondsRemaining((current) => Math.max(current - 1, 0))
+    }, 1000)
+
+    return () => window.clearInterval(timer)
+  }, [round, result, isExpired, secondsRemaining])
+
+  useEffect(() => () => {
+    if (imageObjectUrl.current) {
+      URL.revokeObjectURL(imageObjectUrl.current)
+    }
+  }, [])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -52,11 +167,75 @@ function App() {
         return
       }
 
-      setMatch(payload as MatchResponse)
+      const createdMatch = payload as MatchResponse
+      setMatch(createdMatch)
+      await createRound(createdMatch.matchId)
     } catch {
       setError('No fue posible conectar con el servidor. Verifica que el backend este disponible.')
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleHint() {
+    if (!round) {
+      return
+    }
+
+    setIsLoadingHint(true)
+    setError(null)
+    try {
+      const response = await fetch(`${API_URL}/rounds/${round.roundId}/hints`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      })
+      const payload = (await response.json()) as HintResponse | ErrorResponse
+      if (!response.ok) {
+        if (isConflict(response, payload as ErrorResponse)) {
+          setIsExpired(true)
+        }
+        throw new Error('message' in payload && payload.message ? payload.message : 'No fue posible solicitar una pista.')
+      }
+
+      setHints((current) => [...current, (payload as HintResponse).hint])
+    } catch (requestError) {
+      setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible solicitar una pista.')
+    } finally {
+      setIsLoadingHint(false)
+    }
+  }
+
+  async function handleGuess(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!round || !guess.trim()) {
+      setSafeError('Ingresa una respuesta antes de enviar la conjetura.')
+      return
+    }
+
+    setIsResolvingGuess(true)
+    setError(null)
+    try {
+      const response = await fetch(`${API_URL}/rounds/${round.roundId}/guess`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ guess: guess.trim() }),
+      })
+      const payload = (await response.json()) as GuessResponse | ErrorResponse
+      if (!response.ok) {
+        if (isConflict(response, payload as ErrorResponse)) {
+          setIsExpired(true)
+        }
+        throw new Error('message' in payload && payload.message ? payload.message : 'No fue posible resolver la ronda.')
+      }
+
+      const resolvedRound = payload as GuessResponse
+      setResult(resolvedRound)
+      await readImage(round.roundId)
+    } catch (requestError) {
+      setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible resolver la ronda.')
+    } finally {
+      setIsResolvingGuess(false)
     }
   }
 
@@ -102,15 +281,38 @@ function App() {
       </section>
 
       {match && (
-        <section className="match-ready" aria-live="polite">
-          <p className="step">Partida registrada</p>
-          <h2>Todo listo, {match.alias}</h2>
-          <dl>
-            <div><dt>Modo</dt><dd>{match.gameMode}</dd></div>
-            <div><dt>Dificultad</dt><dd>{match.difficultyLevel}</dd></div>
-            <div><dt>Estado</dt><dd>{match.status}</dd></div>
-          </dl>
-          <p className="match-id">ID de partida: {match.matchId}</p>
+        <section className="round-screen" aria-live="polite">
+          <header className="round-header">
+            <div><p className="step">Partida de {match.alias}</p><h2>Ronda {round?.roundNumber ?? '-'}</h2></div>
+            <dl><div><dt>Modo</dt><dd>{match.gameMode}</dd></div><div><dt>Dificultad</dt><dd>{round?.difficultyLevel ?? match.difficultyLevel}</dd></div></dl>
+          </header>
+
+          {isLoadingRound && <p className="round-status">Preparando entidad oculta...</p>}
+          {isExpired && <p className="round-status expired" role="alert">La ronda ya no esta disponible. La partida fue finalizada por el servidor.</p>}
+          {round && !isExpired && (
+            <div className="round-layout">
+              <section className="entity-panel" aria-label="Entidad oculta">
+                <div className="timer"><span>Bonus de velocidad</span><strong>{secondsRemaining > 0 ? `${secondsRemaining}s` : 'Sin bonus'}</strong></div>
+                <div className="image-stage">{imageUrl ? <img src={imageUrl} alt={result ? `Entidad revelada: ${result.revealedName}` : 'Entidad oculta para adivinar'} /> : <span>Cargando imagen...</span>}</div>
+              </section>
+
+              <section className="play-panel">
+                <div className="hint-section">
+                  <div className="section-heading"><h3>Pistas</h3><span>{3 - hints.length} disponibles</span></div>
+                  {hints.length > 0 && <ol className="hint-list">{hints.map((hint, index) => <li key={`${index}-${hint}`}>{hint}</li>)}</ol>}
+                  <button type="button" className="secondary-action" onClick={handleHint} disabled={isLoadingHint || isResolvingGuess || Boolean(result) || hints.length >= 3}>{isLoadingHint ? 'Buscando pista...' : 'Solicitar pista'}</button>
+                </div>
+
+                <form className="guess-form" onSubmit={handleGuess}>
+                  <label htmlFor="guess">Tu conjetura</label>
+                  <input id="guess" value={guess} onChange={(event) => setGuess(event.target.value)} placeholder="Nombre del personaje" disabled={isResolvingGuess || Boolean(result)} />
+                  <button type="submit" disabled={isResolvingGuess || isLoadingHint || Boolean(result)}>{isResolvingGuess ? 'Resolviendo...' : 'Responder'}</button>
+                </form>
+
+                {result && <div className={result.correct ? 'round-result correct' : 'round-result incorrect'}><p>{result.correct ? 'Acierto confirmado' : 'Ronda resuelta'}</p><h3>{result.revealedName}</h3><dl><div><dt>Puntaje</dt><dd>{result.scoreDelta}</dd></div><div><dt>Racha</dt><dd>{result.currentStreak}</dd></div><div><dt>Partida</dt><dd>{result.matchStatus}</dd></div></dl></div>}
+              </section>
+            </div>
+          )}
         </section>
       )}
     </main>
