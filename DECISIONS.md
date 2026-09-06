@@ -295,14 +295,16 @@ devolvia el artwork original. Un filtro aplicado solo en frontend permitiria
 recuperar la imagen sin ocultacion y revelaria la entidad antes de resolver.
 
 **Decision:** el backend procesa el buffer en memoria con Sharp. Para una
-ronda `ACTIVE` entrega PNG sin metadata, en escala de grises, reducido y con
-blur fijo. Para una ronda `RESOLVED` entrega la imagen original por la misma
-ruta. Para una ronda `EXPIRED` responde `409` sin revelar imagen ni entidad.
+ronda `ACTIVE` extrae el canal alfa del artwork, crea una silueta solida sobre
+un fondo plano y entrega PNG sin metadata. Para una ronda `RESOLVED` entrega
+la imagen original por la misma ruta. Para una ronda `EXPIRED` responde `409`
+sin revelar imagen ni entidad.
 
 **Por que:** Sharp es compatible con Node 24, procesa buffers eficientemente
-en Windows y evita persistir una segunda copia. Jimp se descarto por menor
-rendimiento; CSS/frontend se descarto porque expondria el artwork original;
-Canvas agrega complejidad nativa sin una ventaja proporcional.
+en Windows y evita persistir una segunda copia. El canal alfa conserva la
+forma sin filtrar colores o detalles. Jimp se descarto por menor rendimiento;
+CSS/frontend se descarto porque expondria el artwork original; Canvas agrega
+complejidad nativa sin una ventaja proporcional.
 
 **Consecuencias:** `GET /rounds/:roundId/image` conserva su contrato de ruta,
 pero siempre entrega `image/png` mientras la ronda esta activa. La revelacion

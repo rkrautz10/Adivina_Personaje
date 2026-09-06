@@ -272,6 +272,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se modificaron Prisma, puntaje, dificultad, modos, pistas, LLM, Sharp, abandono ni autenticacion. El frontend no calcula posiciones ni reordena la respuesta. |
 | Verificacion | Backend: build y 17 pruebas pasan. HTTP real: cierre manual `FINISHED` y entrada presente con solo campos publicos. Navegador: fallo `STREAK` muestra resultado, imagen revelada, controles bloqueados y ranking; nueva partida limpia el estado. Vista movil de 390 px sin overflow. |
 
+### Correccion G2 - silueta de entidad activa
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Corregir la obfuscacion global para que una ronda activa muestre la silueta reconocible de la entidad sin exponer sus detalles. |
+| Herramienta | Agente `backend-dominio` nivel Master, con validacion de `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Evaluar el impacto de blur global y sustituirlo por una silueta derivada del canal alfa del artwork de PokeAPI. |
+| Indicacion IMPORTANTE | `Importante!!`: las pruebas detectaron que se obfusca toda la imagen; se debe obfuscar solo la silueta del Pokemon. |
+| Decision humana | Aceptado. Se conserva Sharp y se usa el canal alfa como mascara; no se expone el artwork original antes de resolver. |
+| Propuesta tecnica | Normalizar el PNG, validar transparencia, mapear pixeles opacos a una silueta solida y transparentes a fondo plano, y emitir PNG sin metadata. |
+| Resultado | `image-obfuscation.ts` reemplazo blur global por silueta solida azul oscuro sobre fondo verde claro. Imagen opaca o invalida se rechaza, y `RESOLVED`/`EXPIRED` mantienen sus reglas existentes. |
+| Ajustes o descartes | No se modificaron rutas, Prisma, frontend, puntaje, pistas, modos, dificultad ni ranking. No se uso segmentacion por IA ni filtros en cliente. |
+| Verificacion | `npm test`: 17 pruebas pasan; fixture transparente valida fondo uniforme y silueta sin color original. `npm run build` pasa. Inspeccion visual de una ronda real confirma una silueta definida servida por backend. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

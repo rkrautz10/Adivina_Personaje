@@ -184,9 +184,10 @@ filtro de estado esperado). Esto evita:
   ignorados por Git; `.env.example` documenta las variables sin valores
   reales.
 - El backend nunca expone el nombre real de una entidad antes de resolver la
-  ronda; la imagen se sirve mediante un proxy propio y se obfusca con Sharp
-  mientras la ronda esta activa (`GET /rounds/:roundId/image`), para no filtrar
-  el identificador externo ni el artwork original de PokeAPI.
+  ronda; la imagen se sirve mediante un proxy propio y se convierte con Sharp
+  en silueta basada en su canal alfa mientras la ronda esta activa
+  (`GET /rounds/:roundId/image`), para no filtrar el identificador externo ni
+  el artwork original de PokeAPI.
 - Los errores devueltos al cliente siguen un contrato fijo
   (`statusCode`, `code`, `message`) sin stack traces ni detalles internos.
 
