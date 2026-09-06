@@ -339,9 +339,8 @@ function App() {
 
       <section className="setup" aria-labelledby="setup-title">
         <div className="setup-intro">
-          <p className="step">01 / Preparar exploracion</p>
           <h2 id="setup-title">Define tu partida</h2>
-          <p>Elige un modo y registra tu alias. Las reglas y el puntaje se controlan desde el servidor.</p>
+          <p>Elige un modo y registra tu alias.</p>
         </div>
 
         <form className="setup-form" onSubmit={handleSubmit} noValidate>
