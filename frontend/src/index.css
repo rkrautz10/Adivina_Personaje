@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+/*
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -109,3 +112,26 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+*/
+
+:root {
+  --paper: #fffdf4;
+  --ink: #152128;
+  --muted: #59656a;
+  --coral: #e85d49;
+  --teal: #38b6a3;
+  --teal-dark: #0a766b;
+  --sun: #f7c94b;
+  --mint: #dff4e9;
+  --heading: 'Space Grotesk', sans-serif;
+  --mono: 'DM Mono', monospace;
+  font-family: var(--heading);
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background-color: var(--paper); background-image: linear-gradient(rgba(21, 33, 40, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(21, 33, 40, .06) 1px, transparent 1px); background-size: 28px 28px; }
+button, input { font: inherit; }

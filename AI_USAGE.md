@@ -230,6 +230,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se agregaron migraciones, dependencias ni cambios en puntaje, abandono, modos, pistas, Sharp, ranking, frontend o autenticacion. |
 | Verificacion | `npm test`: 16 pruebas pasan. `npm run build` pasa. HTTP real: tres aciertos consecutivos en `STREAK` hicieron que la siguiente ronda respondiera `difficultyLevel: MEDIUM`. |
 
+### U1 - Inicio y partida
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear la pantalla responsive de inicio para capturar alias, seleccionar modo y crear una partida real. |
+| Herramienta | Agente `frontend-juego` nivel Master, coordinando `backend-dominio`, `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Reemplazar el scaffold Vite por una interfaz operativa sin adelantar ronda, imagen, pistas, conjetura, resultado o ranking. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: consumir `POST /matches`, enviar siempre `gameMode`, mantener al backend como autoridad y proporcionar instrucciones de prueba manual al finalizar. |
+| Decision humana | Aceptado. U1 conserva `matchId` en estado local como puente para U2 y no crea una ronda automaticamente. |
+| Propuesta tecnica | Formulario React con alias, radios `STANDARD`/`STREAK`, estados de carga/error/exito, validacion basica de experiencia y mensajes seguros del backend. |
+| Resultado | Se reemplazo el scaffold de Vite por la pantalla "Adivina Personaje" y se conecto con `POST /matches` usando `VITE_API_URL`. La vista muestra alias, modo, dificultad, estado y `matchId` tras crear la partida. |
+| Ajustes o descartes | No se agregaron dependencias, imagenes de Pokemon, rondas, pistas, guess, resultado, ranking ni logica de negocio en frontend. La prueba con `127.0.0.1` revelo CORS por diferir de `FRONTEND_ORIGIN`; se usa `http://localhost:5173` como URL de prueba. |
+| Verificacion | `npm run lint` y `npm run build` pasan. Pruebas manuales en navegador: alias `Misty` con modo `STREAK` y alias `Brock` con modo `STANDARD`, ambas partidas creadas con estado `IN_PROGRESS` y dificultad `EASY`. Vista movil de 390 px sin overflow horizontal. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
