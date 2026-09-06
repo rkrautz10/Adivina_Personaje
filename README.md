@@ -42,7 +42,7 @@ npm run db:migrate -- --name init
 
 ### 3. Ejecución de Servidores
 
-En dos terminales independientes:
+Desde la raíz del repositorio, en dos terminales independientes:
 
 ```powershell
 # Terminal 1: Backend API (Puerto 3001)
@@ -89,8 +89,13 @@ El backend expone `GET http://localhost:3001/health` para verificar el estado de
 
 ## Ejecución de Pruebas Automatizadas
 
-Para ejecutar la suite unificada de 35 pruebas automatizadas (17 unitarias de dominio + 18 de integración HTTP):
+Para ejecutar la suite unificada de 35 pruebas automatizadas (26 unitarias y 9 de integración HTTP):
 
 ```powershell
 npm.cmd --prefix backend test
 ```
+
+## Tablero ágil
+
+El seguimiento de las 17 historias P0 se encuentra en el
+[GitHub Project Adivina Personaje - Plan 24h](https://github.com/users/rkrautz10/projects/1).

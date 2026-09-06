@@ -33,7 +33,7 @@ cambio que genero antes de cerrar dicha historia.
 | Prompt/resumen | Crear el proyecto, cargar las historias del plan y agregar descripciones y criterios de aceptacion sencillos para seguimiento. |
 | Propuesta tecnica | Crear un Project publico vinculado al repositorio, con flujo `Backlog`, `In Progress`, `In review` y `Done`; cargar las HU como borradores para no crear issues publicos. |
 | Decision humana | El usuario autorizo el acceso a GitHub, la creacion del Project y la actualizacion directa de las historias. |
-| Resultado | Project `Adivina Personaje - Plan 24h` creado con 17 historias P0; cada una tiene descripcion y dos criterios de aceptacion. F1 se preservo en `In Progress`; las demas permanecen en `Backlog`. |
+| Resultado | Project [Adivina Personaje - Plan 24h](https://github.com/users/rkrautz10/projects/1) creado con 17 historias P0; cada una tiene descripcion y dos criterios de aceptacion. F1 se preservo en `In Progress`; las demas permanecen en `Backlog`. |
 | Verificacion | Se comprobo visualmente la creacion del Project, el flujo de estados y el guardado de F1, F2 y X1; la automatizacion confirmo la actualizacion de las 15 historias restantes. |
 | Ajustes o descartes | La primera ejecucion cambio de panel antes de que GitHub terminara de guardar F2; se confirmo el guardado y se repitio el resto esperando la persistencia de cada descripcion. |
 
@@ -312,7 +312,7 @@ cambio que genero antes de cerrar dicha historia.
 | Propuesta tecnica | Crear `app.ts` con la factoria `buildApp()`, y las suites `matches.integration.test.ts`, `rounds.integration.test.ts` y `ranking.integration.test.ts` ejercitando todos los endpoints. |
 | Resultado | Se refactorizo `server.ts` usando `app.ts` y se agregaron 8 pruebas de integracion HTTP que validan creacion de partida, modos, rondas activas, silueta PNG, pistas, conjeturas, auto-cierre STREAK, idempotencia de finalizacion y ranking. |
 | Ajustes o descartes | No se modificaron las reglas de negocio de los servicios ni el esquema Prisma. No se requirio levantar puertos HTTP externos en las pruebas. |
-| Verificacion | `npm test` ejecuta exitosamente las 35 pruebas (17 unitarias + 18 de integracion) en ~5.5 segundos. `npm run build` compila el proyecto sin errores TypeScript. |
+| Verificacion | `npm test` ejecuta exitosamente las 35 pruebas (26 unitarias + 9 de integracion) en ~5.5 segundos. `npm run build` compila el proyecto sin errores TypeScript. |
 
 ### X1 - Documentacion y sustentacion
 
