@@ -357,6 +357,27 @@ la ronda resuelta finaliza la partida.
 
 ---
 
+## ADR-13: Ranking derivado de partidas finalizadas
+
+**Contexto:** el puntaje total ya se persiste en `Match`, pero no existia una
+consulta publica para mostrarlo al terminar. Crear una tabla adicional de
+ranking duplicaria datos derivados y requeriria mantener sincronizacion.
+
+**Decision:** `GET /ranking` consulta exclusivamente partidas `FINISHED`,
+ordena por `totalScore` descendente, `finishedAt` ascendente e ID ascendente,
+y limita la respuesta a 10 entradas por defecto, con maximo de 50. Cada
+entrada contiene posicion, alias, puntaje, modo, rondas jugadas y fecha final.
+
+**Por que:** la consulta es suficiente para el volumen de la prueba, usa la
+fuente de verdad existente y no expone entidades, identificadores internos ni
+atributos de PokeAPI.
+
+**Consecuencias:** partidas abandonadas aparecen con el puntaje persistido.
+El frontend solo presenta el orden y la posicion devueltos por backend; una
+tabla materializada queda fuera de alcance hasta que el volumen lo justifique.
+
+---
+
 ## Evolucion futura del producto
 
 Ideas que van mas alla del alcance de la prueba tecnica, para un contexto de

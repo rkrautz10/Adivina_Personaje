@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 
 import { prisma } from '../database/prisma.js'
 import { AppError } from '../errors/app-error.js'
-import { createMatch, findMatchForFinish, finishMatch } from './match.repository.js'
+import { createMatch, findMatchForFinish, findRanking, finishMatch } from './match.repository.js'
 import { expireAbandonedRound } from './abandonment.service.js'
 import { findOrCreatePlayer } from '../players/player.repository.js'
 
@@ -87,5 +87,20 @@ export async function finishMatchById(matchId: string) {
     }
 
     throw error
+  }
+}
+
+export async function getRanking(limit: number) {
+  const matches = await findRanking(limit)
+
+  return {
+    entries: matches.map((match, index) => ({
+      position: index + 1,
+      alias: match.player.alias,
+      totalScore: match.totalScore,
+      gameMode: match.gameMode,
+      roundsPlayed: match._count.rounds,
+      finishedAt: match.finishedAt,
+    })),
   }
 }

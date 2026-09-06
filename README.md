@@ -63,6 +63,8 @@ servidor no arranca si falta alguna de estas variables requeridas.
 	cuando el LLM no esta disponible.
 - `POST /matches/:matchId/finish`: finaliza una partida sin ronda activa de
 	forma idempotente.
+- `GET /ranking?limit=10`: lista partidas finalizadas ordenadas por puntaje;
+	`limit` acepta valores de 1 a 50.
 
 ## Variables de entorno
 

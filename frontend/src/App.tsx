@@ -42,6 +42,25 @@ type GuessResponse = {
   gameMode: GameMode
 }
 
+type FinishedMatchResponse = {
+  matchId: string
+  status: 'FINISHED'
+  totalScore: number
+  roundsPlayed: number
+  finishedAt: string
+}
+
+type RankingEntry = {
+  position: number
+  alias: string
+  totalScore: number
+  gameMode: GameMode
+  roundsPlayed: number
+  finishedAt: string
+}
+
+type RankingResponse = { entries: RankingEntry[] }
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 const aliasPattern = /^[\p{L}\p{N}_ -]+$/u
 
@@ -53,6 +72,8 @@ function App() {
   const [hints, setHints] = useState<string[]>([])
   const [guess, setGuess] = useState('')
   const [result, setResult] = useState<GuessResponse | null>(null)
+  const [finishedMatch, setFinishedMatch] = useState<FinishedMatchResponse | null>(null)
+  const [ranking, setRanking] = useState<RankingEntry[] | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [secondsRemaining, setSecondsRemaining] = useState(30)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +81,8 @@ function App() {
   const [isLoadingRound, setIsLoadingRound] = useState(false)
   const [isLoadingHint, setIsLoadingHint] = useState(false)
   const [isResolvingGuess, setIsResolvingGuess] = useState(false)
+  const [isFinishingMatch, setIsFinishingMatch] = useState(false)
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false)
   const [isExpired, setIsExpired] = useState(false)
   const imageObjectUrl = useRef<string | null>(null)
 
@@ -94,6 +117,7 @@ function App() {
     setIsLoadingRound(true)
     setError(null)
     setResult(null)
+    setFinishedMatch(null)
     setHints([])
     setGuess('')
     setIsExpired(false)
@@ -232,11 +256,74 @@ function App() {
       const resolvedRound = payload as GuessResponse
       setResult(resolvedRound)
       await readImage(round.roundId)
+      if (resolvedRound.matchStatus === 'FINISHED') {
+        await loadRanking()
+      }
     } catch (requestError) {
       setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible resolver la ronda.')
     } finally {
       setIsResolvingGuess(false)
     }
+  }
+
+  async function loadRanking() {
+    setIsLoadingRanking(true)
+    try {
+      const response = await fetch(`${API_URL}/ranking?limit=10`)
+      const payload = (await response.json()) as RankingResponse | ErrorResponse
+      if (!response.ok) {
+        throw new Error('message' in payload && payload.message ? payload.message : 'No fue posible cargar el ranking.')
+      }
+      setRanking((payload as RankingResponse).entries)
+    } catch (requestError) {
+      setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible cargar el ranking.')
+    } finally {
+      setIsLoadingRanking(false)
+    }
+  }
+
+  async function handleFinishMatch() {
+    if (!match) {
+      return
+    }
+
+    setIsFinishingMatch(true)
+    setError(null)
+    try {
+      const response = await fetch(`${API_URL}/matches/${match.matchId}/finish`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      })
+      const payload = (await response.json()) as FinishedMatchResponse | ErrorResponse
+      if (!response.ok) {
+        throw new Error('message' in payload && payload.message ? payload.message : 'No fue posible finalizar la partida.')
+      }
+      setFinishedMatch(payload as FinishedMatchResponse)
+      await loadRanking()
+    } catch (requestError) {
+      setSafeError(requestError instanceof Error ? requestError.message : 'No fue posible finalizar la partida.')
+    } finally {
+      setIsFinishingMatch(false)
+    }
+  }
+
+  function handleNewMatch() {
+    if (imageObjectUrl.current) {
+      URL.revokeObjectURL(imageObjectUrl.current)
+      imageObjectUrl.current = null
+    }
+    setMatch(null)
+    setRound(null)
+    setHints([])
+    setGuess('')
+    setResult(null)
+    setFinishedMatch(null)
+    setRanking(null)
+    setImageUrl(null)
+    setSecondsRemaining(30)
+    setIsExpired(false)
+    setError(null)
   }
 
   return (
@@ -310,11 +397,13 @@ function App() {
                 </form>
 
                 {result && <div className={result.correct ? 'round-result correct' : 'round-result incorrect'}><p>{result.correct ? 'Acierto confirmado' : 'Ronda resuelta'}</p><h3>{result.revealedName}</h3><dl><div><dt>Puntaje</dt><dd>{result.scoreDelta}</dd></div><div><dt>Racha</dt><dd>{result.currentStreak}</dd></div><div><dt>Partida</dt><dd>{result.matchStatus}</dd></div></dl></div>}
+                {result?.matchStatus === 'IN_PROGRESS' && <div className="round-actions"><button type="button" onClick={() => createRound(match.matchId)} disabled={isLoadingRound || isFinishingMatch}>Siguiente ronda</button><button type="button" className="secondary-action" onClick={handleFinishMatch} disabled={isFinishingMatch || isLoadingRound}>{isFinishingMatch ? 'Finalizando...' : 'Finalizar partida'}</button></div>}
               </section>
             </div>
           )}
         </section>
       )}
+      {match && (result?.matchStatus === 'FINISHED' || finishedMatch) && <section className="final-screen" aria-live="polite"><p className="step">Partida finalizada</p><h2>{match.alias}, registro completado</h2><p className="final-score">Puntaje total: <strong>{finishedMatch?.totalScore ?? result?.totalScore ?? 0}</strong></p><div className="ranking"><div className="section-heading"><h3>Ranking</h3><span>Partidas finalizadas</span></div>{isLoadingRanking && <p>Cargando ranking...</p>}{ranking?.length === 0 && <p>Aun no hay partidas finalizadas.</p>}{ranking && ranking.length > 0 && <ol>{ranking.map((entry) => <li key={`${entry.position}-${entry.alias}-${entry.finishedAt}`}><strong>#{entry.position}</strong><span>{entry.alias}</span><span>{entry.totalScore} pts</span><small>{entry.gameMode} / {entry.roundsPlayed} rondas</small></li>)}</ol>}</div><button type="button" onClick={handleNewMatch}>Nueva partida</button></section>}
     </main>
   )
 }

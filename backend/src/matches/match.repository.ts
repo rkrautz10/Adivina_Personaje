@@ -21,3 +21,18 @@ export function finishMatch(transaction: Prisma.TransactionClient, matchId: stri
     data: { status: 'FINISHED', finishedAt: new Date() },
   })
 }
+
+export function findRanking(limit: number) {
+  return prisma.match.findMany({
+    where: { status: 'FINISHED' },
+    orderBy: [{ totalScore: 'desc' }, { finishedAt: 'asc' }, { id: 'asc' }],
+    take: limit,
+    select: {
+      totalScore: true,
+      gameMode: true,
+      finishedAt: true,
+      player: { select: { alias: true } },
+      _count: { select: { rounds: true } },
+    },
+  })
+}

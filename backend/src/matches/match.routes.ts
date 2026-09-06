@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { validateRequest } from '../http/validate-request.js'
 import { createMatchForAlias, finishMatchById } from './match.service.js'
+import { getRanking } from './match.service.js'
 
 const createMatchSchema = {
   body: z.object({
@@ -31,5 +32,14 @@ export async function registerMatchRoutes(app: FastifyInstance): Promise<void> {
   app.post('/matches/:matchId/finish', async (request) => {
     const { params } = validateRequest(request, finishMatchSchema)
     return finishMatchById(params.matchId)
+  })
+
+  const rankingSchema = {
+    querystring: z.object({ limit: z.coerce.number().int().min(1).max(50).default(10) }),
+  }
+
+  app.get('/ranking', async (request) => {
+    const { querystring } = validateRequest(request, rankingSchema)
+    return getRanking(querystring.limit)
   })
 }

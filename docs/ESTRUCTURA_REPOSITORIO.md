@@ -41,9 +41,9 @@ Adivina_Personaje/
 │       ├── players/
 │       │   └── player.repository.ts # Buscar/crear jugador por alias normalizado
 │       ├── matches/
-│       │   ├── match.repository.ts  # Acceso a datos de Match
-│       │   ├── match.service.ts     # Crear partida, finalizar partida
-│       │   └── match.routes.ts      # POST /matches, POST /matches/:id/finish
+│       │   ├── match.repository.ts  # Acceso a datos y consulta de ranking
+│       │   ├── match.service.ts     # Crear/finalizar partida y ranking
+│       │   └── match.routes.ts      # POST /matches, finish y GET /ranking
 │       ├── providers/
 │       │   ├── character-provider.ts # Interfaz CharacterProvider
 │       │   └── pokeapi.provider.ts   # Adaptador PokeAPI con timeout

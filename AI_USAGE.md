@@ -258,6 +258,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se modificaron backend, Prisma, LLM, fallback, reglas de pistas, Sharp, puntaje, modos, dificultad, ranking ni autenticacion. El contador de 3 minutos no se implementa como autoridad local; el backend resuelve `EXPIRED`. |
 | Verificacion | `npm run lint` y `npm run build` pasan. Prueba manual `STANDARD`: primera ronda creada, imagen activa, tres pistas y cuarta bloqueada. Prueba manual `STREAK`: fallo devuelve `FINISHED`, revela entidad e imagen y deshabilita acciones sin crear otra ronda. |
 
+### U3 - Resultado y ranking
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Completar el ciclo visual con continuación controlada, finalización manual, ranking derivado y nueva partida. |
+| Herramienta | Agentes `frontend-juego` y `backend-dominio` nivel Master, coordinando `pruebas-calidad` y `arquitectura-documentacion`. |
+| Prompt/resumen | Agregar `GET /ranking`, mostrar ranking al finalizar y permitir continuar o cerrar una partida sin trasladar reglas o puntaje al cliente. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: usar solo partidas `FINISHED`, mantener el backend como autoridad sobre orden y posicion, y documentar el endpoint y las pruebas manuales. |
+| Decision humana | Aceptado. El ranking se deriva de `Match`; no se crea tabla adicional ni se muestran datos de entidades. |
+| Propuesta tecnica | Repositorio/servicio/ruta de ranking con orden estable y limite validado; controles React para siguiente ronda, finalizar, ranking y nueva partida, revocando Blob URLs. |
+| Resultado | Se agrego `GET /ranking?limit=10`. U3 permite continuar solo tras una ronda resuelta, finalizar manualmente, muestra ranking al recibir `FINISHED` y reinicia todo el estado para una nueva partida. |
+| Ajustes o descartes | No se modificaron Prisma, puntaje, dificultad, modos, pistas, LLM, Sharp, abandono ni autenticacion. El frontend no calcula posiciones ni reordena la respuesta. |
+| Verificacion | Backend: build y 17 pruebas pasan. HTTP real: cierre manual `FINISHED` y entrada presente con solo campos publicos. Navegador: fallo `STREAK` muestra resultado, imagen revelada, controles bloqueados y ranking; nueva partida limpia el estado. Vista movil de 390 px sin overflow. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
