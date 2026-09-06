@@ -3,7 +3,7 @@ import OpenAI from 'openai'
 import type { HintAttributes, HintLevel, HintProvider } from './hint-provider.js'
 import { HintProviderError } from './hint-provider.error.js'
 
-const DEFAULT_TIMEOUT_MS = 3000
+const DEFAULT_TIMEOUT_MS = 8000
 const MAX_OUTPUT_WORDS = 25
 
 type ChatCompletionRequest = {

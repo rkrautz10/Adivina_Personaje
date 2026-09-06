@@ -17,6 +17,7 @@ const llmProvider = new LlmHintProvider({
   apiKey: environment.AI_API_KEY,
   model: environment.AI_MODEL,
   baseURL: environment.AI_BASE_URL,
+  timeoutMs: environment.AI_TIMEOUT_MS,
 })
 
 function toHintAttributes(attributes: Prisma.JsonValue): HintAttributes {
