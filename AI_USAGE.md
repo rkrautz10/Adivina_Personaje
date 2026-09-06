@@ -300,6 +300,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se modifico la logica de negocio existente, constantes ni firmas. No se requirió PostgreSQL ni Docker para la ejecucion de la suite de dominio. |
 | Verificacion | `npm test` ejecuta exitosamente las 27 pruebas unitarias en ~1.1 segundos. `npm run build` pasa sin errores de TypeScript. |
 
+### Q2 - Pruebas de integracion
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Crear una suite de pruebas de integracion HTTP para validar los contratos de la API, flujos de partidas/rondas, reglas de estado y ranking contra PostgreSQL. |
+| Herramienta | Agente especializado `pruebas-calidad` nivel Master, coordinando `backend-dominio` y `arquitectura-documentacion`. |
+| Prompt/resumen | Factorizar la app Fastify en `app.ts` y crear tests de integracion usando `app.inject()` para `/health`, `/matches`, `/rounds` (imagen, pistas, guess) y `/ranking`. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: verificar contratos de API, flujos completos de partidas/rondas, reglas de estado, errores HTTP y ranking con PostgreSQL, usando `app.inject()`. |
+| Decision humana | Aceptado. Se usa `app.inject()` sobre la app Fastify para ejecutar pruebas HTTP rapidas e independientes de puertos de red. |
+| Propuesta tecnica | Crear `app.ts` con la factoria `buildApp()`, y las suites `matches.integration.test.ts`, `rounds.integration.test.ts` y `ranking.integration.test.ts` ejercitando todos los endpoints. |
+| Resultado | Se refactorizo `server.ts` usando `app.ts` y se agregaron 8 pruebas de integracion HTTP que validan creacion de partida, modos, rondas activas, silueta PNG, pistas, conjeturas, auto-cierre STREAK, idempotencia de finalizacion y ranking. |
+| Ajustes o descartes | No se modificaron las reglas de negocio de los servicios ni el esquema Prisma. No se requirio levantar puertos HTTP externos en las pruebas. |
+| Verificacion | `npm test` ejecuta exitosamente las 35 pruebas (17 unitarias + 18 de integracion) en ~5.5 segundos. `npm run build` compila el proyecto sin errores TypeScript. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]
