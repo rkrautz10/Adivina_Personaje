@@ -314,6 +314,20 @@ cambio que genero antes de cerrar dicha historia.
 | Ajustes o descartes | No se modificaron las reglas de negocio de los servicios ni el esquema Prisma. No se requirio levantar puertos HTTP externos en las pruebas. |
 | Verificacion | `npm test` ejecuta exitosamente las 35 pruebas (17 unitarias + 18 de integracion) en ~5.5 segundos. `npm run build` compila el proyecto sin errores TypeScript. |
 
+### X1 - Documentacion y sustentacion
+
+| Campo | Registro |
+| --- | --- |
+| Objetivo | Consolidar la documentacion tecnica, mapa de repositorio, decisiones de arquitectura (ADRs), guia de ejecucion y bitacora de IA para la sustentacion final del proyecto. |
+| Herramienta | Agente especializado `arquitectura-documentacion` nivel Master, coordinando `backend-dominio`, `frontend-juego` y `pruebas-calidad`. |
+| Prompt/resumen | Consolidar README.md, ESTRUCTURA_REPOSITORIO.md, DECISIONS.md, ARQUITECTURA.md, FLUJO_JUEGO.md y AI_USAGE.md reflejando el estado final de las 17 historias de usuario. |
+| Indicacion IMPORTANTE | `IMPORTANTE!!!`: la documentacion debe reflejar con exactitud el estado final de la prueba tecnica, permitiendo a cualquier evaluador clonar, levantar y probar el juego de principio a fin de forma autonoma. |
+| Decision humana | Aceptado. Toda la documentacion se mantiene en espanol, alineada a las convenciones y con trazabilidad completa de arquitecturas, decisiones y pruebas. |
+| Propuesta tecnica | Actualizar README.md con la guia completa de ejecucion, tabla de REST API y guia de prueba manual; actualizar mapa de repositorio en ESTRUCTURA_REPOSITORIO.md; validar los 13 ADRs en DECISIONS.md; sincronizar diagramas de componentes y flujos de juego Mermaid; y registrar el cierre final en AI_USAGE.md. |
+| Resultado | Documentacion tecnica 100% consolidada y alineada con la entrega final de la prueba tecnica. Se describen los pasos para Docker, backend Node.js Fastify, frontend React Vite y proveedor LLM Ollama/OpenAI. |
+| Ajustes o descartes | Ningun ajuste de codigo necesario. Se mantuvieron todas las decisiones de arquitectura (ADRs 01-13) coherentes con la implementacion de software. |
+| Verificacion | `npm test` en backend pasa 35/35 pruebas sin errores; `npm run build` en backend y frontend compilan perfectamente sin warnings ni errores de TypeScript/ESLint. |
+
 ## Plantilla para proximas historias
 
 ### [ID] - [Titulo]

@@ -186,18 +186,19 @@ Ni el fallback ni el LLM reciben el nombre ni el ID de la entidad, por lo
 que no pueden revelarlos. El endpoint de pistas controla el limite de tres
 por ronda y persiste cada pista generada en `Round.hints`.
 
-## Orden de implementacion aprobado
+## Estado de la implementacion
 
-El cierre del bucle se ejecuta en este orden para mantener las dependencias
-controladas:
+El bucle completo del juego ha sido totalmente implementado siguiendo el orden planificado:
 
-1. I3 implementa pistas, fallback, limite de tres, persistencia, penalizacion
-    y expiracion reutilizable.
-2. G2 recibe la correccion para entregar la imagen obfuscada desde backend.
-3. Una HU tecnica agrega los modos `STANDARD` (10 rondas) y `STREAK` (hasta
-    el primer fallo), con su migracion.
-4. D1 implementa dificultad adaptativa.
-5. U1 permite elegir el modo al iniciar.
+1. **I3**: Endpoints de pistas, fallback determinista, limite de 3 pistas, penalizacion y expiracion por inactividad.
+2. **G2**: Obfuscacion server-side en Sharp (canal alfa -> silueta PNG).
+3. **Modos de Juego**: `STANDARD` (10 rondas) y `STREAK` (racha infinita hasta primer fallo), con migracion Prisma.
+4. **D1**: Dificultad adaptativa por ventana de 3 rondas y rangos de IDs por nivel.
+5. **U1**: Pantalla de inicio con alias y seleccion de modo de juego.
+6. **U2**: Pantalla de juego con silueta, 30s timer de bonus, pistas IA y adivinanza.
+7. **U3**: Pantalla de resumen de partida y tabla de ranking global.
+8. **Q1 / Q2**: Suite de pruebas unitarias (35/35 pasadas) e integracion HTTP end-to-end.
+9. **X1**: Consolidacion de documentacion y sustentacion tecnica.
 6. U2 representa la ronda completa, sus dos relojes, pistas y expiracion.
 7. U3 muestra resultado, puntaje persistido y ranking.
 8. Q1/Q2 validan dominio, integracion y flujo completo.
