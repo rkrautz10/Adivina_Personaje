@@ -36,29 +36,45 @@ export type LlmHintProviderOptions = {
   client?: HintCompletionClient
 }
 
-function describeRange(value: number | undefined, unit: string): string {
-  return value === undefined ? 'no disponible' : `${value} ${unit}`
+function describeHeight(height: number): string {
+  if (height <= 5) {
+    return 'pequeno'
+  }
+
+  if (height <= 15) {
+    return 'mediano'
+  }
+
+  return 'grande'
 }
 
-function buildPrompt(attributes: HintAttributes, level: HintLevel): string {
-  const types = attributes.types?.slice(0, 2).join(', ') || 'no disponible'
-  const ability = attributes.abilities?.[0] || 'no disponible'
+function buildPrompt(attributes: HintAttributes, level: HintLevel, previousHints: string[]): string {
+  const allowedValue =
+    level === 1 ? attributes.types?.[0] : level === 2 && attributes.height !== undefined ? describeHeight(attributes.height) : attributes.abilities?.[0]
+  const history = previousHints.length > 0 ? previousHints.map((hint, index) => `${index + 1}. ${hint}`).join('\n') : 'Ninguna.'
 
   return [
-    `Nivel de pista: ${level}.`,
-    `Tipos: ${types}.`,
-    `Altura: ${describeRange(attributes.height, 'decimetros')}.`,
-    `Peso: ${describeRange(attributes.weight, 'hectogramos')}.`,
-    `Habilidad: ${ability}.`,
-    'Genera una sola frase corta en espanol basada solo en esos datos.',
+    `Atributo autorizado: ${level === 1 ? 'tipo' : level === 2 ? 'tamano' : 'habilidad'}.`,
+    `Valor verificable: ${allowedValue}.`,
+    'Genera una sola frase corta en espanol basada exclusivamente en ese valor verificable.',
+    'No menciones otro atributo ni agregues conocimiento externo o inferencias sobre la entidad.',
+    'No repitas, reformules, parafrasees, resumas ni infieras informacion de pistas anteriores, aunque uses palabras diferentes.',
+    'No uses sinonimos, categorias relacionadas ni descripciones visuales que comuniquen un atributo ya revelado.',
+    `Pistas anteriores:\n${history}`,
     'No incluyas nombres de entidades, variantes, traducciones, identificadores ni Markdown.',
+    'Si no puedes cumplir todas las reglas, responde exactamente FALLBACK_REQUIRED.',
   ].join('\n')
 }
 
 function validateHint(content: string | null | undefined): string {
   const hint = content?.trim() || ''
 
-  if (!hint || hint.split(/\s+/u).length > MAX_OUTPUT_WORDS || /[*_`#[\]{}<>]/u.test(hint)) {
+  if (
+    !hint ||
+    hint === 'FALLBACK_REQUIRED' ||
+    hint.split(/\s+/u).length > MAX_OUTPUT_WORDS ||
+    /[*_`#[\]{}<>]/u.test(hint)
+  ) {
     throw new HintProviderError('INVALID_OUTPUT', 'LLM returned an invalid hint')
   }
 
@@ -75,7 +91,7 @@ export class LlmHintProvider implements HintProvider {
     this.client = options.client ?? (apiKey ? createOpenAiClient(apiKey, options.baseURL) : undefined)
   }
 
-  async generateHint(attributes: HintAttributes, level: HintLevel): Promise<string> {
+  async generateHint(attributes: HintAttributes, level: HintLevel, previousHints: string[] = []): Promise<string> {
     if (!this.client) {
       throw new HintProviderError('UNAVAILABLE', 'LLM provider is not configured')
     }
@@ -92,7 +108,7 @@ export class LlmHintProvider implements HintProvider {
               content:
                 'Eres un generador de pistas de un juego. No intentes identificar ni revelar la entidad. Responde solo texto plano en espanol.',
             },
-            { role: 'user', content: buildPrompt(attributes, level) },
+            { role: 'user', content: buildPrompt(attributes, level, previousHints) },
           ],
           max_tokens: 60,
           temperature: 0.2,

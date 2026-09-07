@@ -13,20 +13,20 @@ function describeHeight(height: number): string {
 }
 
 export class FallbackHintProvider implements HintProvider {
-  async generateHint(attributes: HintAttributes, level: HintLevel): Promise<string> {
+  async generateHint(attributes: HintAttributes, level: HintLevel, _previousHints: string[] = []): Promise<string> {
     switch (level) {
       case 1:
         return attributes.types?.[0]
           ? `Su afinidad principal esta relacionada con el tipo ${attributes.types[0]}.`
-          : 'Tiene caracteristicas elementales particulares.'
+          : 'No hay informacion adicional verificable para esta pista.'
       case 2:
         return attributes.height !== undefined
           ? `Su tamano se encuentra en un rango ${describeHeight(attributes.height)}.`
-          : 'Su tamano tiene rasgos distintivos.'
+          : 'No hay informacion adicional verificable para esta pista.'
       case 3:
         return attributes.abilities?.[0]
           ? `Posee una habilidad especial llamada ${attributes.abilities[0]}.`
-          : 'Posee una habilidad especial.'
+          : 'No hay informacion adicional verificable para esta pista.'
     }
   }
 }

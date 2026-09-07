@@ -42,6 +42,36 @@ test('returns a valid short hint', async () => {
   assert.equal(await provider.generateHint(attributes, 1), 'Tiene afinidad con la electricidad.')
 })
 
+test('includes previous hints while allowing a single progressive attribute', async () => {
+  let requestContent = ''
+  const provider = new LlmHintProvider({
+    apiKey: 'test-key',
+    model: 'test-model',
+    client: {
+      chat: {
+        completions: {
+          create: async (request) => {
+            requestContent = request.messages[1].content
+            return { choices: [{ message: { content: 'Su tamano se encuentra en un rango pequeno.' } }] }
+          },
+        },
+      },
+    },
+  })
+
+  await provider.generateHint({ height: 4 }, 2, ['Su afinidad principal esta relacionada con el tipo electric.'])
+
+  assert.match(requestContent, /Pistas anteriores:/)
+  assert.match(requestContent, /tipo electric/)
+  assert.match(requestContent, /Atributo autorizado: tamano/)
+  assert.match(requestContent, /Valor verificable: pequeno/)
+  assert.match(requestContent, /No repitas, reformules, parafrasees, resumas ni infieras informacion/)
+  assert.match(requestContent, /No uses sinonimos, categorias relacionadas ni descripciones visuales/)
+  assert.match(requestContent, /FALLBACK_REQUIRED/)
+  assert.doesNotMatch(requestContent, /Tipos:|Altura:|Peso:|Habilidad:/)
+  assert.doesNotMatch(requestContent, /Habilidad: static/)
+})
+
 test('rejects empty and oversized output', async () => {
   const emptyProvider = new LlmHintProvider({
     apiKey: 'test-key',
@@ -53,6 +83,11 @@ test('rejects empty and oversized output', async () => {
     model: 'test-model',
     client: clientReturning('uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince dieciseis diecisiete dieciocho diecinueve veinte veintiuno veintidos veintitres veinticuatro veinticinco veintiseis'),
   })
+  const fallbackProvider = new LlmHintProvider({
+    apiKey: 'test-key',
+    model: 'test-model',
+    client: clientReturning('FALLBACK_REQUIRED'),
+  })
 
   await assert.rejects(
     () => emptyProvider.generateHint(attributes, 1),
@@ -60,6 +95,10 @@ test('rejects empty and oversized output', async () => {
   )
   await assert.rejects(
     () => longProvider.generateHint(attributes, 1),
+    (error: unknown) => error instanceof HintProviderError && error.code === 'INVALID_OUTPUT',
+  )
+  await assert.rejects(
+    () => fallbackProvider.generateHint(attributes, 1),
     (error: unknown) => error instanceof HintProviderError && error.code === 'INVALID_OUTPUT',
   )
 })
